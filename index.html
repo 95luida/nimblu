@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Omino Distruttore</title>
+<style>
+  :root { --ink:#16161a; --muted:#5d5d66; --line:#e6e3dc; --bg:#faf8f3; --card:#fff; --accent:#e11d2e; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--ink); background:var(--bg); }
+  header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 32px; border-bottom:1px solid var(--line); background:#fff; }
+  .logo { font:900 22px/1 Georgia,serif; letter-spacing:-.5px; }
+  .logo span { color:var(--accent); }
+  nav { display:flex; gap:6px; flex-wrap:wrap; }
+  nav a { color:var(--ink); text-decoration:none; padding:6px 12px; border-radius:999px; font-weight:600; font-size:14px; }
+  nav a:hover { background:#f1eee6; }
+  main { max-width:1080px; margin:0 auto; padding:32px; }
+  .install { display:grid; grid-template-columns:1fr auto; gap:24px; align-items:center; background:var(--ink); color:#fff; border-radius:18px; padding:26px 30px; margin-bottom:40px; }
+  .install h2 { margin:0 0 6px; font-size:22px; }
+  .install.mascot { background:#edf2fb; color:#22314f; border:2px solid #c9d6ee; margin-top:-24px; }
+  .install.mascot p { color:#4a5d82; }
+  .install.mascot .btn.play { background:#4f74b3; }
+  .install p { margin:0; color:#c9c9d1; font-size:14px; }
+  .install kbd { background:#2d2d35; border:1px solid #44444f; border-radius:5px; padding:1px 6px; font-size:12px; color:#fff; }
+  .btns { display:flex; gap:10px; flex-wrap:wrap; }
+  .btn { display:inline-block; border:0; cursor:pointer; font:700 15px/1 system-ui,sans-serif; padding:14px 20px; border-radius:12px; text-decoration:none; }
+  .btn.play { background:var(--accent); color:#fff; }
+  .btn.bm { background:#fff; color:var(--ink); border:2px dashed #999; cursor:grab; }
+  .hero { display:grid; grid-template-columns:1.2fr 1fr; gap:36px; align-items:center; margin-bottom:48px; }
+  .hero h1 { font:900 52px/1.05 Georgia,serif; margin:0 0 16px; letter-spacing:-1px; }
+  .hero p { color:var(--muted); font-size:18px; margin:0 0 22px; }
+  .tag { display:inline-block; background:#ffe3e5; color:var(--accent); font-weight:700; font-size:12px; letter-spacing:1px; text-transform:uppercase; padding:4px 10px; border-radius:999px; margin-bottom:14px; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; margin-bottom:48px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px; }
+  .card h3 { margin:12px 0 6px; font-size:19px; }
+  .card p { margin:0 0 12px; color:var(--muted); font-size:14px; }
+  .card a { color:var(--accent); font-weight:700; font-size:14px; text-decoration:none; }
+  .quote { font:italic 26px/1.4 Georgia,serif; border-left:5px solid var(--accent); margin:0 0 48px; padding:6px 0 6px 22px; }
+  ul.list { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; padding:0; list-style:none; margin:0 0 60px; }
+  ul.list li { background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 18px; font-weight:600; }
+  footer { text-align:center; padding:30px; color:var(--muted); font-size:13px; border-top:1px solid var(--line); }
+  @media (max-width:760px){ .install,.hero,.cards,ul.list { grid-template-columns:1fr; } .hero h1 { font-size:38px; } header { padding:16px; } main { padding:16px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Il Quotidiano<span>.</span></div>
+  <nav><a href="#">Cronaca</a><a href="#">Tech</a><a href="#">Sport</a><a href="#">Cultura</a><a href="#">Meteo</a></nav>
+</header>
+
+<main>
+  <section class="install">
+    <div>
+      <h2>🥊 Omino Distruttore</h2>
+      <p>Premi <b>Prova qui</b> per giocare su questa pagina. Se vuoi usarlo su qualsiasi sito, trascina il bottone bianco nella barra dei preferiti (in Chrome la mostri con <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>B</kbd>), apri un sito e cliccalo. Se lo clicchi una seconda volta, l'omino se ne va.<br>Tieni premuto <kbd>spazio</kbd> per il jetpack, cambi arma con <kbd>1</kbd>–<kbd>5</kbd> e spari con <kbd>F</kbd>.</p>
+    </div>
+    <div class="btns">
+      <button class="btn play" id="play">▶ Prova qui</button>
+      <a class="btn bm" id="bm" href="#" title="Trascinami nella barra dei preferiti">🥊 Omino Distruttore</a>
+    </div>
+  </section>
+
+  <section class="install mascot">
+    <div>
+      <h2>💧 Nimblu, la creatura del laghetto</h2>
+      <p>Vive sulla pagina e sta quasi sempre ai bordi: cammina sopra gli elementi, lungo i loro lati e sulle pareti dello schermo, e ogni tanto passa al centro. Mangia le lettere, ti segue quando scorri e si può trascinare. Cliccalo per scegliere quanto si muove, o per mandarlo nell'angolo in basso a destra a riposare.</p>
+    </div>
+    <div class="btns">
+      <button class="btn play" id="play-mascot">▶ Chiama Nimblu</button>
+      <a class="btn bm" id="bm-mascot" href="#" title="Trascinami nella barra dei preferiti">💧 Nimblu</a>
+    </div>
+  </section>
+
+  <section class="hero">
+    <div>
+      <span class="tag">Ultim'ora</span>
+      <h1>Un omino stilizzato minaccia l'intero web</h1>
+      <p>Gli esperti sono preoccupati: titoli, immagini e bottoni non sono mai stati così vulnerabili. "Basta un pugno", dichiara una fonte anonima.</p>
+      <button class="btn play" onclick="alert('Prova a colpirmi invece!')">Leggi l'articolo</button>
+    </div>
+    <svg viewBox="0 0 400 280" width="100%" role="img" aria-label="Illustrazione">
+      <rect width="400" height="280" rx="18" fill="#1f2a44"/>
+      <circle cx="310" cy="70" r="36" fill="#ffd400"/>
+      <path d="M0 220 L90 140 L170 200 L260 110 L400 230 L400 280 L0 280 Z" fill="#3b5b8c"/>
+      <path d="M0 250 L120 190 L220 240 L320 180 L400 250 L400 280 L0 280 Z" fill="#e11d2e"/>
+    </svg>
+  </section>
+
+  <section class="cards">
+    <article class="card">
+      <svg viewBox="0 0 300 150" width="100%"><rect width="300" height="150" rx="10" fill="#ffe3e5"/><circle cx="150" cy="75" r="40" fill="#e11d2e"/></svg>
+      <h3>Il bottone che non voleva cadere</h3>
+      <p>Storia di un call-to-action che ha resistito a tre calci consecutivi.</p>
+      <a href="#">Continua →</a>
+    </article>
+    <article class="card">
+      <svg viewBox="0 0 300 150" width="100%"><rect width="300" height="150" rx="10" fill="#dff3ea"/><rect x="100" y="35" width="100" height="80" rx="8" fill="#15803d"/></svg>
+      <h3>Titoli in caduta libera</h3>
+      <p>La gravità torna protagonista del web design contemporaneo.</p>
+      <a href="#">Continua →</a>
+    </article>
+    <article class="card">
+      <svg viewBox="0 0 300 150" width="100%"><rect width="300" height="150" rx="10" fill="#e4ecfb"/><polygon points="150,25 215,125 85,125" fill="#2563eb"/></svg>
+      <h3>Onda d'urto: istruzioni</h3>
+      <p>Premi C e osserva il paragrafo volare via insieme ai suoi vicini.</p>
+      <a href="#">Continua →</a>
+    </article>
+  </section>
+
+  <blockquote class="quote">"Non ho mai visto un'interfaccia così indifesa." — Un pixel sopravvissuto</blockquote>
+
+  <ul class="list">
+    <li>📰 Newsletter del mattino</li>
+    <li>🎧 Podcast della settimana</li>
+    <li>📈 Mercati in tempo reale</li>
+    <li>🌦️ Previsioni meteo</li>
+  </ul>
+
+  <section class="hero">
+    <svg viewBox="0 0 400 280" width="100%" role="img" aria-label="Illustrazione">
+      <rect width="400" height="280" rx="18" fill="#fef3c7"/>
+      <rect x="60" y="120" width="80" height="120" fill="#92400e"/><rect x="160" y="70" width="80" height="170" fill="#b45309"/><rect x="260" y="150" width="80" height="90" fill="#d97706"/>
+    </svg>
+    <div>
+      <span class="tag">Economia</span>
+      <h2 style="font:900 38px/1.1 Georgia,serif;margin:0 0 14px">Crollano i grafici (letteralmente)</h2>
+      <p>Gli analisti consigliano di tenere lontani i lanciarazzi dalle slide trimestrali.</p>
+      <button class="btn play" onclick="alert('Troppo tardi')">Scopri di più</button>
+    </div>
+  </section>
+
+  <section class="cards">
+    <article class="card"><h3>Pistola vs paragrafo</h3><p>Un colpo, una parola in meno. Il copywriter è in lacrime.</p><a href="#">Continua →</a></article>
+    <article class="card"><h3>Lanciafiamme e SEO</h3><p>I contenuti bruciati si posizionano peggio: lo conferma uno studio.</p><a href="#">Continua →</a></article>
+    <article class="card"><h3>Granate a rimbalzo</h3><p>Rimbalzano sui titoli, esplodono sui footer. Nessuno è al sicuro.</p><a href="#">Continua →</a></article>
+  </section>
+
+  <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);margin-bottom:60px">
+    <tr><th style="text-align:left;padding:12px">Arma</th><th style="text-align:left;padding:12px">Danno</th><th style="text-align:left;padding:12px">Stile</th></tr>
+    <tr><td style="padding:12px;border-top:1px solid var(--line)">Pistola</td><td style="padding:12px;border-top:1px solid var(--line)">★★</td><td style="padding:12px;border-top:1px solid var(--line)">★★★</td></tr>
+    <tr><td style="padding:12px;border-top:1px solid var(--line)">Lanciarazzi</td><td style="padding:12px;border-top:1px solid var(--line)">★★★★★</td><td style="padding:12px;border-top:1px solid var(--line)">★★★★★</td></tr>
+  </table>
+</main>
+
+<footer>Pagina di prova — nessun sito reale è stato maltrattato.</footer>
+
+<script src="stickman.js?v=5"></script>
+<script src="mascot.js?v=30"></script>
+<script>
+  function setup(src, bmId, playId) {
+    var bm = document.getElementById(bmId);
+    bm.href = 'javascript:' + encodeURIComponent('(' + src.toString() + ')()');
+    bm.addEventListener('click', function (e) { e.preventDefault(); this.textContent = '↑ Trascinami nei preferiti'; });
+    document.getElementById(playId).addEventListener('click', function () { this.blur(); src(); });
+  }
+  setup(window.__SM_SRC, 'bm', 'play');
+  setup(window.__MASCOT_SRC, 'bm-mascot', 'play-mascot');
+</script>
+</body>
+</html>

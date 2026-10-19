@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Nimblu</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Nimblu">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#8ec3e3">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  :root {
+    --sky: #d6ecf7; --water: #8ec3e3; --deep: #5b93c4;
+    --pad: #74b36c; --pad-d: #4e8a50; --pad-ink: #1f4a28;
+    --rock: #9aa3ad; --rock-d: #737c87;
+    --ink: #22314f; --glass: rgba(255,255,255,.72);
+  }
+  .night {
+    --sky: #1c2b4d; --water: #24406e; --deep: #152748;
+    --pad: #4f8a52; --pad-d: #37663c; --pad-ink: #d9f0d5;
+    --rock: #5d6674; --rock-d: #444c58;
+    --glass: rgba(30,45,80,.72); --ink: #e6eefc;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; }
+  body {
+    font: 500 15px/1.35 system-ui, -apple-system, sans-serif; color: var(--ink);
+    background: linear-gradient(180deg, var(--sky) 0%, var(--water) 38%, var(--deep) 100%);
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation;
+  }
+  /* riflessi dell'acqua che si muovono piano */
+  .ripples {
+    position: fixed; inset: 0; pointer-events: none; opacity: .5;
+    background:
+      radial-gradient(ellipse 120px 14px at 20% 55%, rgba(255,255,255,.35), transparent 70%),
+      radial-gradient(ellipse 90px 10px at 70% 68%, rgba(255,255,255,.3), transparent 70%),
+      radial-gradient(ellipse 140px 16px at 45% 82%, rgba(255,255,255,.25), transparent 70%),
+      radial-gradient(ellipse 80px 9px at 85% 45%, rgba(255,255,255,.3), transparent 70%);
+    animation: drift 9s ease-in-out infinite alternate;
+  }
+  @keyframes drift { from { transform: translateX(-12px); } to { transform: translateX(12px); } }
+  /* canne sui lati, solo decorazione */
+  .reeds { position: fixed; bottom: 0; width: 90px; height: 46vh; pointer-events: none; opacity: .8;
+    background:
+      linear-gradient(80deg, transparent 46%, #5c8f4f 47%, #5c8f4f 51%, transparent 52%) 10px 30% / 40px 70% no-repeat,
+      linear-gradient(95deg, transparent 46%, #4e7f44 47%, #4e7f44 51%, transparent 52%) 38px 10% / 40px 90% no-repeat,
+      linear-gradient(85deg, transparent 46%, #6a9c5a 47%, #6a9c5a 51%, transparent 52%) 58px 45% / 36px 55% no-repeat; }
+  .reeds.l { left: -18px; } .reeds.r { right: -18px; transform: scaleX(-1); }
+
+  header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 5;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: calc(env(safe-area-inset-top, 0px) + 8px) 16px 8px;
+  }
+  header h1 { margin: 0; font: 800 20px/1 system-ui, -apple-system, sans-serif; letter-spacing: -.3px; color: var(--ink); }
+  header small { display: block; font: 500 12px/1.2 system-ui, sans-serif; opacity: .75; margin-top: 2px; }
+  .hbtn {
+    border: 0; border-radius: 999px; padding: 9px 14px; background: var(--glass); color: var(--ink);
+    font: 700 14px/1 system-ui, -apple-system, sans-serif; box-shadow: 0 2px 10px rgba(20,40,80,.15);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .hbtn:active { transform: scale(.96); }
+
+  /* ninfee con le parole da mangiare: sono <p> così Nimblu ci cammina sopra e ne mangia le lettere */
+  p.pad {
+    position: absolute; margin: 0; height: 46px; padding: 6px 10px 0; text-align: center;
+    font: 700 17px/1.2 system-ui, -apple-system, sans-serif; color: var(--pad-ink); letter-spacing: .5px;
+    background: radial-gradient(ellipse at 40% 35%, color-mix(in srgb, var(--pad) 80%, white), var(--pad) 60%, var(--pad-d));
+    border-radius: 50% / 46%; box-shadow: 0 6px 0 rgba(20,50,90,.18), inset 0 -4px 0 rgba(0,0,0,.08);
+    white-space: nowrap; overflow: hidden;
+  }
+  p.pad::after { /* la tacca tipica della ninfea */
+    content: ""; position: absolute; right: 10%; top: 38%; width: 18px; height: 10px;
+    background: var(--water); clip-path: polygon(0 50%, 100% 0, 100% 100%); opacity: .8;
+  }
+  p.pad.pop { animation: pop .5s ease-out; }
+  @keyframes pop { 0% { transform: scale(.6); opacity: .3; } 70% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
+  figure.rock {
+    position: absolute; margin: 0; background: radial-gradient(ellipse at 35% 30%, color-mix(in srgb, var(--rock) 70%, white), var(--rock) 55%, var(--rock-d));
+    border-radius: 48% 52% 40% 44% / 60% 58% 42% 40%; box-shadow: inset 0 -6px 0 rgba(0,0,0,.1);
+  }
+
+  /* barra della chat: è una <figure>, quindi anche lei è una superficie su cui camminare */
+  figure.bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; margin: 0;
+    padding: 10px 12px calc(env(safe-area-inset-bottom, 0px) + 10px);
+    background: var(--glass); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    box-shadow: 0 -4px 20px rgba(20,40,80,.12);
+  }
+  figure.bar form { display: flex; gap: 8px; margin: 0; }
+  figure.bar input {
+    flex: 1; min-width: 0; border: 1.5px solid rgba(79,116,179,.35); border-radius: 999px; padding: 11px 16px;
+    font: 500 16px/1.2 system-ui, -apple-system, sans-serif; color: #22314f; background: #fff;
+    -webkit-user-select: text; user-select: text;
+  }
+  figure.bar input:focus { outline: none; border-color: #4f74b3; }
+  figure.bar button { border: 0; border-radius: 999px; padding: 0 18px; background: #4f74b3; color: #fff; font: 700 15px/1 system-ui, -apple-system, sans-serif; }
+  figure.bar button:active { background: #3d5f99; }
+  .hbtns { display: flex; gap: 8px; }
+  .hbtn.icon { padding: 9px 12px; }
+
+  /* impostazioni: pannello che sale dal basso */
+  .sheet { position: fixed; inset: 0; z-index: 2147483647; display: none; }
+  .sheet.open { display: block; }
+  .sheet .shade { position: absolute; inset: 0; background: rgba(15,25,45,.35); }
+  .sheet .panel {
+    position: absolute; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow: auto;
+    background: #f5f8fd; color: #22314f; border-radius: 22px 22px 0 0; box-shadow: 0 -10px 40px rgba(15,25,45,.3);
+    padding: 10px 18px calc(env(safe-area-inset-bottom, 0px) + 18px); -webkit-user-select: text; user-select: text;
+  }
+  .sheet .grip { width: 40px; height: 5px; border-radius: 3px; background: #c9d6ee; margin: 0 auto 10px; }
+  .sheet h2 { margin: 4px 0 2px; font: 800 20px/1.2 system-ui, -apple-system, sans-serif; }
+  .sheet h3 { margin: 18px 0 6px; font: 700 12px/1.3 system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #5b6f96; }
+  .sheet p, .sheet li { font-size: 14px; line-height: 1.45; }
+  .sheet .muted { color: #5b6f96; font-size: 13px; margin: 4px 0 0; }
+  .sheet ol { margin: 6px 0 0; padding-left: 20px; }
+  .sheet a { color: #3d5f99; font-weight: 700; }
+  .sheet .card { background: #fff; border: 1px solid #dbe4f3; border-radius: 14px; padding: 12px 14px; }
+  .sheet .status { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+  .sheet .dot { width: 10px; height: 10px; border-radius: 50%; background: #cfd8e6; flex: none; }
+  .sheet .dot.ok { background: #2f9e6a; } .sheet .dot.no { background: #d64545; } .sheet .dot.warn { background: #c77a12; }
+  .sheet .keyrow { display: flex; gap: 8px; margin-top: 10px; }
+  .sheet input[type=password], .sheet input[type=text] {
+    flex: 1; min-width: 0; border: 1.5px solid #b7c8e6; border-radius: 12px; padding: 11px 12px;
+    font: 500 16px/1.2 ui-monospace, Menlo, monospace; color: #22314f; background: #fff;
+  }
+  .sheet button { border: 0; border-radius: 12px; padding: 11px 14px; font: 700 15px/1 system-ui, -apple-system, sans-serif; background: #e2eaf7; color: #22314f; }
+  .sheet button.primary { background: #4f74b3; color: #fff; }
+  .sheet .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #dbe4f3; }
+  .sheet .switch { appearance: none; -webkit-appearance: none; flex: none; width: 48px; height: 28px; border-radius: 999px; background: #cfd8e6; position: relative; margin: 0; }
+  .sheet .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .sheet .switch:checked { background: #4f74b3; }
+  .sheet .switch:checked::after { transform: translateX(20px); }
+  .sheet ul.mem { list-style: none; margin: 0; padding: 0; }
+  .sheet ul.mem li { display: flex; gap: 8px; align-items: flex-start; padding: 8px 0; border-top: 1px solid #dbe4f3; }
+  .sheet ul.mem li span { flex: 1; }
+  .sheet ul.mem li button { background: transparent; padding: 0 6px; font-size: 18px; color: #5b6f96; }
+  .sheet .done { width: 100%; margin-top: 18px; }
+  .sheet .seg3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: #e2eaf7; border-radius: 14px; margin-bottom: 10px; }
+  .sheet .seg3 button { background: transparent; padding: 10px 4px; font-size: 14px; }
+  .sheet .seg3 button[aria-pressed=true] { background: #4f74b3; color: #fff; }
+  .sheet .sizes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .sheet .sizes button { display: grid; gap: 3px; text-align: left; background: #f5f8fd; border: 1.5px solid #dbe4f3; padding: 10px; }
+  .sheet .sizes button span { font: 500 12px/1.3 system-ui, sans-serif; color: #5b6f96; }
+  .sheet .sizes button[aria-pressed=true] { border-color: #4f74b3; background: #eaf0fb; }
+  .sheet .bar2 { height: 8px; border-radius: 99px; background: #e2eaf7; overflow: hidden; margin-top: 12px; }
+  .sheet .bar2 i { display: block; height: 100%; width: 0; background: #4f74b3; transition: width .3s; }
+  .sheet .wide { width: 100%; margin-top: 12px; }
+  .sheet .primary:disabled { opacity: .6; }
+  .sheet .pipv { display: block; width: 100%; aspect-ratio: 4 / 3; margin-top: 12px; border-radius: 14px; background: #9ccbe9; object-fit: cover; }
+  .sheet ol li + li { margin-top: 4px; }
+  #hint { position: fixed; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 78px); z-index: 4; text-align: center; font-size: 13px; opacity: .8; pointer-events: none; transition: opacity .6s; }
+</style>
+</head>
+<body>
+  <div class="ripples"></div>
+  <div class="reeds l"></div><div class="reeds r"></div>
+
+  <header data-mascot="1">
+    <div><h1>Nimblu</h1><small id="sub">il laghetto</small></div>
+    <div class="hbtns">
+      <button class="hbtn" id="feed" type="button">🍃 Dai da mangiare</button>
+      <button class="hbtn icon" id="pipOpen" type="button" aria-label="Nimblu fuori dall'app">🪟</button>
+      <button class="hbtn icon" id="gear" type="button" aria-label="Impostazioni">⚙︎</button>
+    </div>
+  </header>
+
+  <main id="pond"></main>
+
+  <p id="hint">Tocca Nimblu per il suo menu · trascinalo per la collottola</p>
+  <figure class="bar">
+    <form id="chat" autocomplete="off">
+      <input id="msg" type="text" maxlength="120" placeholder="Scrivi a Nimblu…" aria-label="Messaggio per Nimblu" enterkeyhint="send">
+      <button type="submit">Invia</button>
+    </form>
+  </figure>
+
+  <div id="sheet" class="sheet" data-mascot="1" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="shade" data-close="1"></div>
+    <div class="panel">
+      <div class="grip"></div>
+      <h2 id="sheetTitle">Impostazioni</h2>
+
+      <h3>Il cervello di Nimblu</h3>
+      <div class="seg3" role="radiogroup" aria-label="Cervello">
+        <button type="button" data-m="locale">🧠 Tascabile</button>
+        <button type="button" data-m="gemini">✨ Gemini</button>
+        <button type="button" data-m="semplice">💬 Semplice</button>
+      </div>
+
+      <div class="card" id="cardLocale">
+        <div class="status"><span class="dot" id="locDot"></span><span id="locStatus">Da scaricare</span></div>
+        <p class="muted" id="locInfo">Un'AI che gira sul tuo telefono: gratis, senza chiavi e senza internet, anche i messaggi restano qui. Si scarica una volta sola, meglio in Wi-Fi.</p>
+        <div class="sizes" role="radiogroup" aria-label="Dimensione">
+          <button type="button" data-s="bravo"><b>Più bravo</b><span>≈ 0,9 GB · parla meglio italiano</span></button>
+          <button type="button" data-s="leggero"><b>Leggero</b><span>≈ 0,4 GB · più veloce</span></button>
+        </div>
+        <div class="bar2" id="locBar" hidden><i id="locFill"></i></div>
+        <p class="muted" id="locText" hidden></p>
+        <button class="primary wide" id="locGet" type="button">Scarica il cervello</button>
+      </div>
+
+      <div class="card" id="cardGemini" hidden>
+        <div class="status"><span class="dot" id="aiDot"></span><span id="aiStatus">Nessuna chiave</span></div>
+        <p class="muted" id="aiInfo">Con una chiave gratuita di Google Gemini, Nimblu risponde con più fantasia.</p>
+        <div class="keyrow">
+          <input id="aiKey" type="password" placeholder="Incolla qui la chiave" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Chiave API di Gemini">
+          <button class="primary" id="aiSave" type="button">Salva</button>
+        </div>
+        <p class="muted">Come averla, gratis:</p>
+        <ol>
+          <li>Apri <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> e accedi con Google.</li>
+          <li>Tocca <b>Create API key</b> e copiala (inizia con <b>AIza</b>).</li>
+          <li>Torna qui, incollala e tocca <b>Salva</b>.</li>
+        </ol>
+        <p class="muted">La chiave resta solo su questo telefono. I messaggi passano da Google, che sul piano gratuito può usarli per migliorare i suoi modelli.</p>
+      </div>
+
+      <div class="card" id="cardSemplice" hidden>
+        <p class="muted" style="margin:0">Nessuna AI: Nimblu usa le sue frasi già scritte. Si ricorda comunque il tuo nome.</p>
+      </div>
+
+      <h3>Cosa ricorda di te</h3>
+      <ul class="mem" id="mem"></ul>
+      <p class="muted" id="memEmpty">Ancora niente: raccontagli qualcosa nella chat.</p>
+      <button type="button" id="memClear" hidden>Dimentica tutto</button>
+
+      <button class="primary done" type="button" data-close="1">Fatto</button>
+    </div>
+  </div>
+
+  <!-- finestrella sopra le altre app: su iPhone è il "picture in picture" dei video -->
+  <div id="pip" class="sheet" data-mascot="1" role="dialog" aria-modal="true" aria-labelledby="pipTitle">
+    <div class="shade" data-close="1"></div>
+    <div class="panel">
+      <div class="grip"></div>
+      <h2 id="pipTitle">Nimblu fuori dall'app</h2>
+      <p class="muted">Una finestrella che resta sopra la Home e sopra le altre app, con Nimblu che vive nel suo laghetto.</p>
+      <video id="pipVideo" class="pipv" src="nimblu-pip.mp4" poster="nimblu-pip.jpg" muted loop playsinline preload="metadata" aria-label="Nimblu nel laghetto"></video>
+      <button class="primary wide" id="pipGo" type="button">🪟 Fallo uscire</button>
+      <p class="muted" id="pipMsg" hidden></p>
+      <h3>Come si usa</h3>
+      <ol>
+        <li>Tocca <b>Fallo uscire</b>: Nimblu passa in una finestrella.</li>
+        <li>Torna alla Home o apri un'altra app: la finestrella resta sopra.</li>
+        <li>Trascinala dove vuoi, allargala o stringila con due dita, spingila contro il bordo per nasconderla (resta una linguetta).</li>
+        <li>Per chiuderla toccala e premi ✕.</li>
+      </ol>
+      <p class="muted">iPhone non permette a nessuna app di far camminare un personaggio libero sopra le altre: la finestrella è il modo che Apple consente. Dentro c'è un'animazione di 48 secondi che si ripete.</p>
+      <button class="primary done" type="button" data-close="1">Fatto</button>
+    </div>
+  </div>
+
+  <script src="brain.js"></script>
+  <script src="mascot.js"></script>
+  <script>
+    (function () {
+      var WORDS = ['alga', 'bolle', 'girino', 'ninfea', 'blub', 'pioggia', 'sasso', 'lumaca', 'rana', 'stagno', 'muschio', 'goccia', 'luna', 'sole', 'tuffo', 'canna', 'libellula', 'onda', 'fango', 'pesce'];
+      var pond = document.getElementById('pond');
+      var hour = new Date().getHours();
+      if (hour < 7 || hour >= 20) document.documentElement.classList.add('night');
+      document.getElementById('sub').textContent = hour < 7 || hour >= 20 ? 'il laghetto di notte' : 'il laghetto';
+
+      function word() { return WORDS[Math.random() * WORDS.length | 0]; }
+      // ninfee soprattutto ai lati, qualcuna al centro: posizioni in percentuale dello schermo
+      var PADS = [
+        [4, 26, 30], [64, 22, 32], [34, 40, 30], [6, 52, 34], [60, 58, 34], [30, 70, 28], [70, 78, 26]
+      ];
+      var pads = PADS.map(function (p) {
+        var el = document.createElement('p');
+        el.className = 'pad';
+        el.style.left = p[0] + 'vw'; el.style.top = p[1] + 'vh'; el.style.width = p[2] + 'vw';
+        el.textContent = word();
+        pond.appendChild(el);
+        return el;
+      });
+      [[-4, 86, 26, 14], [78, 84, 28, 16]].forEach(function (r) {
+        var el = document.createElement('figure');
+        el.className = 'rock';
+        el.style.left = r[0] + 'vw'; el.style.top = r[1] + 'vh'; el.style.width = r[2] + 'vw'; el.style.height = r[3] + 'vw';
+        pond.appendChild(el);
+      });
+      function regrow(el, force) {
+        if (!force && el.textContent.trim().length > 1) return;
+        el.textContent = word();
+        el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+      }
+      // le parole mangiate ricrescono
+      setInterval(function () { pads.forEach(function (p) { regrow(p, false); }); }, 15000);
+
+      var level = null;
+      try { level = localStorage.getItem('__nimblu_level'); } catch (e) {}
+      window.__MASCOT_SRC({
+        persistent: true, app: true, scale: 1.6, level: level || 'vivace',
+        floorEl: document.querySelector('figure.bar'), // la rissa con l'omino si fa sopra la barra della chat
+        topEl: document.querySelector('header'), // e le barre della vita stanno sotto l'intestazione
+        ai: function (p) { return NimbluBrain.ask(p.text); },
+        aiPage: false,
+        aiHint: function (err) {
+          if (/nolocal/.test(err)) return 'Psst: se vuoi che ti risponda con la mia testa, tocca ⚙︎ e scarica il mio cervello tascabile. 🧠';
+          if (/nokey/.test(err)) return 'Psst: per usare Gemini tocca ⚙︎ e metti la chiave gratuita.';
+          if (/locale|nowebgpu|nomodello/.test(err)) return 'Il mio cervello tascabile oggi fa le bizze: rispondo come so fare io!';
+          if (/timeout/.test(err)) return 'Google non mi risponde... rispondo come so fare io!';
+          if (/chiave/.test(err)) return 'Mmm, la chiave di Gemini non funziona: controllala in ⚙︎.';
+          if (/limite/.test(err)) return 'Ho chiacchierato troppo: la mia AI gratuita deve riposare un minuto. 😅';
+          if (/rete/.test(err)) return 'Non trovo internet... rispondo come so fare io!';
+          return '';
+        }
+      });
+
+      // ---------- impostazioni ----------
+      var sheet = document.getElementById('sheet');
+      document.documentElement.appendChild(sheet); // dopo Nimblu, così le impostazioni stanno sopra di lui
+      function $(id) { return document.getElementById(id); }
+      function pressed(sel, attr, val) { [].forEach.call(document.querySelectorAll(sel), function (b) { b.setAttribute('aria-pressed', b.getAttribute(attr) === val ? 'true' : 'false'); }); }
+      function showMode() {
+        var m = NimbluBrain.mode();
+        pressed('#sheet .seg3 button', 'data-m', m);
+        $('cardLocale').hidden = m !== 'locale'; $('cardGemini').hidden = m !== 'gemini'; $('cardSemplice').hidden = m !== 'semplice';
+        showLocal(); showGemini();
+      }
+      // --- tascabile ---
+      function locState(dot, status, info) { $('locDot').className = 'dot ' + dot; $('locStatus').textContent = status; if (info) $('locInfo').textContent = info; }
+      function showLocal() {
+        pressed('#sheet .sizes button', 'data-s', NimbluBrain.localSize());
+        var get = $('locGet');
+        if (!NimbluBrain.webgpu()) {
+          locState('no', 'Non supportato su questo telefono', 'Serve Safari con WebGPU: aggiorna iOS all\'ultima versione. Intanto puoi usare Gemini o le risposte semplici.');
+          get.hidden = true; return;
+        }
+        if (NimbluBrain.localLoaded()) { locState('ok', 'Pronto', 'Nimblu pensa con il suo cervello tascabile, direttamente sul telefono.'); get.hidden = true; $('locBar').hidden = true; $('locText').hidden = true; return; }
+        if (NimbluBrain.localLoading()) { locState('warn', NimbluBrain.localReady() ? 'Si sta svegliando…' : 'Download in corso…'); get.hidden = true; return; }
+        get.hidden = false; get.disabled = false;
+        if (NimbluBrain.localReady()) { locState('warn', 'Scaricato', 'Il cervello è già sul telefono: toccalo per svegliarlo.'); get.textContent = 'Sveglia il cervello'; }
+        else { locState('', 'Da scaricare', 'Un\'AI che gira sul tuo telefono: gratis, senza chiavi e senza internet, anche i messaggi restano qui. Si scarica una volta sola, meglio in Wi-Fi.'); get.textContent = 'Scarica il cervello (' + NimbluBrain.LOCAL[NimbluBrain.localSize()].size + ')'; }
+      }
+      NimbluBrain.onProgress(function (p, t) {
+        $('locBar').hidden = false; $('locText').hidden = false;
+        $('locFill').style.width = Math.round(p * 100) + '%';
+        $('locText').textContent = Math.round(p * 100) + '% · ' + (t || '').replace(/\[[^\]]*\]\s*/g, '').slice(0, 90);
+        if (sheet.classList.contains('open')) showLocal();
+      });
+      $('locGet').addEventListener('click', function () {
+        this.disabled = true;
+        locState('warn', NimbluBrain.localReady() ? 'Si sta svegliando…' : 'Download in corso…', 'Tieni l\'app aperta finché non finisce. Se la chiudi, riprende da dove era arrivato.');
+        $('locBar').hidden = false; $('locText').hidden = false;
+        NimbluBrain.loadLocal().then(function () {
+          showLocal();
+          if (window.__mascot) { window.__mascot.say('Blub! Adesso ragiono con la mia testa! 🧠'); window.__mascot.act('saluta'); }
+        }).catch(function (err) {
+          var m = String(err && err.message || err);
+          locState('no', 'Non è andata', m === 'nowebgpu' ? 'Questo Safari non supporta WebGPU: aggiorna iOS.' :
+            'Il telefono non è riuscito a caricare il modello' + (err && err.detail ? ' («' + String(err.detail).slice(0, 120) + '»)' : '') + '. Prova il cervello "Leggero".');
+          $('locGet').hidden = false; $('locGet').disabled = false; $('locGet').textContent = 'Riprova';
+        });
+      });
+      [].forEach.call(document.querySelectorAll('#sheet .sizes button'), function (b) {
+        b.addEventListener('click', function () { if (NimbluBrain.localLoading()) return; NimbluBrain.setLocalSize(b.getAttribute('data-s')); showLocal(); });
+      });
+      [].forEach.call(document.querySelectorAll('#sheet .seg3 button'), function (b) {
+        b.addEventListener('click', function () { NimbluBrain.setMode(b.getAttribute('data-m')); showMode(); });
+      });
+      // --- gemini ---
+      function showAi(state, text) {
+        var map = { ok: ['ok', 'Attiva'], none: ['', 'Nessuna chiave'], bad: ['no', 'La chiave non funziona'], test: ['warn', 'Controllo la chiave…'] };
+        var m = map[state];
+        $('aiDot').className = 'dot ' + m[0];
+        $('aiStatus').textContent = m[1];
+        if (text) $('aiInfo').textContent = text;
+      }
+      function showGemini() {
+        var k = NimbluBrain.key();
+        $('aiKey').value = k ? '••••••••' + k.slice(-4) : '';
+        if (!k) showAi('none', 'Con una chiave gratuita di Google Gemini, Nimblu risponde con più fantasia.');
+        else showAi('ok', 'Nimblu risponde con Gemini e si ricorda quello che gli racconti.');
+      }
+      function renderMem() {
+        var l = NimbluBrain.memories(), ul = $('mem');
+        var nome = ''; try { nome = localStorage.getItem('__nimblu_name') || ''; } catch (e) {}
+        ul.textContent = '';
+        var all = (nome ? ['Si chiama ' + nome] : []).concat(l);
+        all.forEach(function (m, i) {
+          var li = document.createElement('li'), sp = document.createElement('span'), b = document.createElement('button');
+          sp.textContent = m; b.type = 'button'; b.textContent = '×'; b.setAttribute('aria-label', 'Dimentica: ' + m);
+          b.addEventListener('click', function () {
+            if (nome && i === 0) { try { localStorage.removeItem('__nimblu_name'); } catch (e) {} }
+            else { var cur = NimbluBrain.memories(); cur.splice(i - (nome ? 1 : 0), 1); NimbluBrain.setMemories(cur); }
+            renderMem();
+          });
+          li.appendChild(sp); li.appendChild(b); ul.appendChild(li);
+        });
+        $('memEmpty').hidden = all.length > 0;
+        $('memClear').hidden = !all.length;
+      }
+      function openSheet() { showMode(); renderMem(); sheet.classList.add('open'); }
+      function closeSheet() { sheet.classList.remove('open'); }
+      $('gear').addEventListener('click', openSheet);
+      sheet.addEventListener('click', function (e) { if (e.target.getAttribute('data-close')) closeSheet(); });
+      $('aiKey').addEventListener('focus', function () { if (/^•/.test(this.value)) this.value = ''; this.type = 'text'; });
+      $('aiKey').addEventListener('blur', function () { this.type = 'password'; });
+      $('aiSave').addEventListener('click', async function () {
+        var k = $('aiKey').value.trim(), btn = this;
+        if (!k || /^•/.test(k)) { showGemini(); return; }
+        showAi('test'); btn.disabled = true;
+        try {
+          await NimbluBrain.test(k);
+          NimbluBrain.setKey(k); NimbluBrain.setMode('gemini');
+          showMode();
+          if (window.__mascot) { window.__mascot.say('Blub! Adesso ragiono con la mia testa! 🧠'); window.__mascot.act('saluta'); }
+        } catch (err) {
+          var m = String(err && err.message || err), det = err && err.detail ? ' Messaggio di Google: «' + String(err.detail).slice(0, 180) + '»' : '';
+          showAi('bad', (m === 'chiave' ? 'Google non accetta la chiave. Usa una chiave creata su aistudio.google.com/apikey (inizia con AIza).' :
+            m === 'limite' ? 'La chiave sembra giusta ma hai raggiunto il limite gratuito: riprova tra un minuto.' :
+            m === 'timeout' ? 'Google non risponde. Se la chiave inizia con AQ, crea invece una chiave AIza su aistudio.google.com/apikey.' :
+            m === 'rete' ? 'Non riesco a raggiungere Google: controlla la connessione.' : 'Qualcosa non va (' + m + '): riprova.') + det);
+          if (m === 'limite') NimbluBrain.setKey(k);
+        } finally { btn.disabled = false; }
+      });
+      $('memClear').addEventListener('click', function () { NimbluBrain.forgetAll(); renderMem(); });
+
+      // ---------- finestrella (picture in picture) ----------
+      var pip = $('pip'), pv = $('pipVideo'), pipMsg = $('pipMsg');
+      document.documentElement.appendChild(pip); // sopra Nimblu, come le impostazioni
+      var standalone = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+      function pipSay(t) { pipMsg.hidden = false; pipMsg.textContent = t; }
+      $('pipOpen').addEventListener('click', function () {
+        pipMsg.hidden = true;
+        pv.preload = 'auto';
+        var p = pv.play(); if (p && p.catch) p.catch(function () {});
+        pip.classList.add('open');
+      });
+      pip.addEventListener('click', function (e) { if (e.target.getAttribute('data-close')) pip.classList.remove('open'); });
+      $('pipGo').addEventListener('click', function () {
+        // la richiesta deve partire subito dal tocco: niente attese prima
+        var p = pv.play(); if (p && p.catch) p.catch(function () {});
+        function ok() { pipSay('Fatto! Ora torna alla Home o apri un\'altra app: Nimblu resta sopra.'); }
+        function no() {
+          if (pv.readyState < 1) pipSay('Un attimo, il video si sta ancora caricando: riprova tra qualche secondo.');
+          else if (standalone) pipSay('Dall\'icona sulla Home iPhone potrebbe non permetterlo. Apri questo indirizzo in Safari e riprova da lì: ' + location.href);
+          else pipSay('Questo browser non supporta la finestrella. Su iPhone usa Safari.');
+        }
+        try {
+          if (pv.webkitSupportsPresentationMode && pv.webkitSupportsPresentationMode('picture-in-picture')) { pv.webkitSetPresentationMode('picture-in-picture'); setTimeout(function () { if (pv.webkitPresentationMode === 'picture-in-picture') ok(); else no(); }, 700); }
+          else if (document.pictureInPictureEnabled && pv.requestPictureInPicture) pv.requestPictureInPicture().then(ok, no);
+          else no();
+        } catch (err) { no(); }
+      });
+
+      document.getElementById('feed').addEventListener('click', function () {
+        var p = pads[Math.random() * pads.length | 0];
+        regrow(p, true);
+        if (window.__mascot) { window.__mascot.say('Gnam, ' + p.textContent + '!'); window.__mascot.act('mangia'); }
+      });
+      document.getElementById('chat').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var inp = document.getElementById('msg'), q = inp.value.trim();
+        if (!q || !window.__mascot) return;
+        inp.value = ''; inp.blur();
+        window.__mascot.chat(q);
+      });
+      setTimeout(function () { document.getElementById('hint').style.opacity = '0'; }, 7000);
+      if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(function () {});
+    })();
+  </script>
+</body>
+</html>

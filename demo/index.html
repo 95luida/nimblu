@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Residenza Lumen — Appartamenti in classe A (pagina demo)</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap">
+<style>
+  /* Pagina DEMO di Nimblu: una landing immobiliare inventata, con alcuni errori tipici di UX, SEO e accessibilità
+     lasciati apposta (immagini senza alt, icone senza nome, campi senza etichetta, link tutti uguali...). */
+  :root { --ink:#2a2622; --muted:#6b6259; --bg:#faf6f0; --card:#fffdf9; --line:#e8dfd2; --accent:#9b5b34; --green:#4f6b45; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:400 17px/1.6 Inter, system-ui, sans-serif; }
+  .demo { background:#2a2622; color:#f3ebe0; font:500 13px/1.4 Inter, system-ui, sans-serif; text-align:center; padding:8px 16px; }
+  .demo a { color:#f2c49b; }
+  header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px clamp(16px, 5vw, 64px); }
+  .logo { display:flex; align-items:center; gap:10px; font:400 24px/1 'DM Serif Display', Georgia, serif; }
+  .logo img { width:36px; height:36px; }
+  nav { display:flex; align-items:center; gap:8px; }
+  nav a.ic, nav button { display:inline-grid; place-items:center; width:38px; height:38px; border-radius:50%; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:18px; cursor:pointer; }
+  nav a.ic svg { width:18px; height:18px; }
+  .hero { display:grid; grid-template-columns:1.05fr 1fr; gap:clamp(24px, 4vw, 56px); align-items:center; padding:24px clamp(16px, 5vw, 64px) 56px; }
+  .hero h1 { font:400 clamp(40px, 5.2vw, 68px)/1.04 'DM Serif Display', Georgia, serif; margin:0 0 18px; letter-spacing:-.01em; }
+  .hero p { color:var(--muted); max-width:52ch; margin:0 0 24px; }
+  .hero img { width:100%; height:auto; border-radius:18px; display:block; }
+  .cta { display:inline-block; padding:14px 22px; border-radius:999px; background:var(--accent); color:#fff; font-weight:600; cursor:pointer; }
+  .facts { display:flex; gap:28px; margin-top:28px; color:var(--muted); font-size:15px; }
+  .facts b { display:block; color:var(--ink); font:400 28px/1.1 'DM Serif Display', Georgia, serif; }
+  section { padding:40px clamp(16px, 5vw, 64px); }
+  h4 { font:400 34px/1.1 'DM Serif Display', Georgia, serif; margin:0 0 22px; }
+  h2 { font:400 34px/1.1 'DM Serif Display', Georgia, serif; margin:0 0 12px; }
+  .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+  .card img { width:100%; aspect-ratio:3/2; object-fit:cover; display:block; }
+  .card div { padding:16px 18px 20px; }
+  .card p { margin:0 0 6px; font-weight:600; }
+  .card span { color:var(--muted); font-size:15px; display:block; margin-bottom:10px; }
+  .card a { color:var(--accent); font-weight:600; }
+  .contact { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:start; }
+  form { display:grid; gap:12px; }
+  input, textarea { font:inherit; padding:12px 14px; border:1px solid #d9cdbd; border-radius:10px; background:#fff; }
+  textarea { min-height:110px; }
+  form button { justify-self:start; padding:13px 22px; border-radius:999px; border:0; background:var(--ink); color:#fff; font:600 16px Inter, sans-serif; cursor:pointer; }
+  iframe { width:100%; height:300px; border:0; border-radius:16px; }
+  footer { padding:28px clamp(16px, 5vw, 64px); color:var(--muted); font-size:14px; border-top:1px solid var(--line); }
+  @media (max-width: 860px) { .hero, .contact { grid-template-columns:1fr; } .grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<p class="demo">Pagina demo di <b>Nimblu</b>: una landing inventata con errori lasciati apposta. Cliccalo e premi 🔍 per vedere il controllo UX, SEO e non vedenti. <a href="../">← torna al progetto</a></p>
+<header>
+  <div class="logo"><img src="img/logo-lumen.svg" width="36" height="36"> Residenza Lumen</div>
+  <nav>
+    <a class="ic" href="https://www.instagram.com/" target="_blank"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/></svg></a>
+    <a class="ic" href="https://www.facebook.com/" target="_blank"><svg viewBox="0 0 24 24"><path d="M14 8h3V4h-3c-2.2 0-4 1.8-4 4v2H8v4h2v6h4v-6h3l1-4h-4V8z" fill="currentColor"/></svg></a>
+    <a class="ic" href="tel:+390200000000"><svg viewBox="0 0 24 24"><path d="M6 3h4l2 5-2.5 1.5a11 11 0 0 0 5 5L16 12l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z" fill="currentColor"/></svg></a>
+    <button type="button">☰</button>
+  </nav>
+</header>
+<div class="hero">
+  <div>
+    <h1>Case nuove, piene di luce, a due passi dal parco</h1>
+    <p>Bilocali, trilocali e attici in classe A con terrazzo, in un quartiere tranquillo e ben collegato. Consegna prevista nella primavera 2028.</p>
+    <span class="cta" onclick="alert('Demo: qui si prenoterebbe una visita')">Prenota una visita</span>
+    <div class="facts"><div><b>32</b>appartamenti</div><div><b>A</b>classe energetica</div><div><b>5'</b>dalla metro</div></div>
+  </div>
+  <img src="img/facciata-residenza-1600x900.svg">
+</div>
+<section>
+  <h4>Le soluzioni disponibili</h4>
+  <div class="grid">
+    <div class="card"><img src="img/bilocale-terrazzo-1024x683.svg"><div><p>Bilocale con terrazzo</p><span>58 m² · 2° piano</span><a href="#bilocale">Scopri di più</a></div></div>
+    <div class="card"><img src="img/IMG_2041.svg" alt="IMG_2041.jpg"><div><p>Trilocale angolare</p><span>86 m² · 3° piano</span><a href="#trilocale">Scopri di più</a></div></div>
+    <div class="card"><img src="img/attico-panoramico-1024x683.svg" alt="foto"><div><p>Attico panoramico</p><span>120 m² · 6° piano</span><a href="#attico">Scopri di più</a></div></div>
+  </div>
+</section>
+<section class="contact">
+  <div>
+    <h2>Vieni a trovarci</h2>
+    <form class="wpcf7-form" onsubmit="event.preventDefault(); alert('Demo: nessun dato viene inviato');">
+      <input type="text" name="your-name" placeholder="Nome e cognome *" required>
+      <input type="email" name="your-email" placeholder="La tua email *" required>
+      <input type="tel" name="your-phone">
+      <textarea name="your-message" placeholder="Messaggio"></textarea>
+      <button type="submit">Invia</button>
+    </form>
+  </div>
+  <iframe data-src="https://www.google.com/maps/embed?pb=demo" srcdoc="<body style='margin:0;display:grid;place-items:center;height:100vh;background:#e9e2d4;font:600 16px system-ui;color:#6b6259'>🗺️ Qui ci sarebbe la mappa</body>"></iframe>
+</section>
+<footer>© Residenza Lumen — progetto immaginario, pagina di prova per Nimblu.</footer>
+<script src="../mascot.js"></script>
+<script>window.__MASCOT_SRC && window.__MASCOT_SRC({ topEl: document.querySelector('.demo') });</script>
+</body>
+</html>

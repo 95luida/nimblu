@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Nimblu",
+  "version": "3.13.1",
+  "description": "Nimblu, la creatura del laghetto che vive sulle pagine: controlla UX, SEO e accessibilità, mangia lettere e fa a botte con l'omino.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "offscreen"
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "action": {
+    "default_title": "Nimblu",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "32": "icon32.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "mascot.js",
+        "avvio.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "minimum_chrome_version": "138",
+  "background": {
+    "service_worker": "background.js"
+  }
+}

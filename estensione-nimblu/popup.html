@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Nimblu</title>
+<style>
+  :root { --ink:#22314f; --muted:#5b6f96; --bg:#f5f8fd; --line:#c9d6ee; --on:#4f74b3; --off:#cfd8e6; --ok:#2f9e6a; --warn:#c77a12; }
+  * { box-sizing:border-box; }
+  body { margin:0; width:300px; padding:14px; background:var(--bg); color:var(--ink); font:500 13px/1.4 system-ui,-apple-system,sans-serif; }
+  header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  header img { width:40px; height:40px; }
+  h1 { margin:0; font-size:16px; }
+  h2 { margin:14px 0 6px; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  header p { margin:0; color:var(--muted); font-size:12px; }
+  label.row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:9px 0; border-top:1px solid var(--line); cursor:pointer; }
+  .row span small { display:block; color:var(--muted); font-size:11px; word-break:break-all; }
+  input[type=checkbox] { appearance:none; flex:none; width:36px; height:20px; border-radius:999px; background:var(--off); position:relative; cursor:pointer; transition:background .15s; margin:0; }
+  input[type=checkbox]::after { content:""; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:#fff; transition:transform .15s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+  input[type=checkbox]:checked { background:var(--on); }
+  input[type=checkbox]:checked::after { transform:translateX(16px); }
+  input[type=checkbox]:focus-visible { outline:2px solid var(--on); outline-offset:2px; }
+  .ai { background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  .status { display:flex; align-items:center; gap:8px; font-weight:600; }
+  .dot { width:9px; height:9px; border-radius:50%; background:var(--off); flex:none; }
+  .dot.ok { background:var(--ok); } .dot.warn { background:var(--warn); } .dot.no { background:#d64545; }
+  .ai p { margin:4px 0 0; color:var(--muted); font-size:12px; }
+  button { font:600 12px/1.2 system-ui,-apple-system,sans-serif; border:0; border-radius:9px; padding:8px 10px; cursor:pointer; }
+  button:focus-visible { outline:2px solid var(--on); outline-offset:2px; }
+  .primary { background:var(--on); color:#fff; margin-top:8px; width:100%; }
+  .primary:disabled { opacity:.6; cursor:default; }
+  .fight { background:#fde4e4; color:#8a1c24; margin:4px 0 2px; }
+  .fight:hover { background:#f9cfcf; }
+  #fightNote { margin:4px 0 0; }
+  .ghost { background:transparent; color:var(--muted); padding:4px 6px; }
+  ul { list-style:none; margin:0; padding:0; max-height:150px; overflow:auto; }
+  li { display:flex; align-items:flex-start; gap:6px; padding:5px 0; border-top:1px solid var(--line); font-size:12px; }
+  li span { flex:1; }
+  li button { background:transparent; color:var(--muted); padding:0 4px; font-size:14px; }
+  .empty { color:var(--muted); font-size:12px; margin:0; }
+  .memhead { display:flex; justify-content:space-between; align-items:baseline; }
+  #note { margin:12px 0 0; color:var(--muted); font-size:12px; }
+</style>
+</head>
+<body>
+  <header>
+    <img src="icon128.png" alt="">
+    <div><h1>Nimblu</h1><p>La creatura del laghetto delle tue pagine</p></div>
+  </header>
+
+  <label class="row" for="on"><span>Attivo su tutti i siti</span><input type="checkbox" id="on"></label>
+  <label class="row" for="talk"><span>Chiacchiere<small>Frasi che dice di sua iniziativa</small></span><input type="checkbox" id="talk"></label>
+  <label class="row" for="ux"><span>Consigli UX automatici<small>Ogni tanto segnala problemi della pagina</small></span><input type="checkbox" id="ux"></label>
+  <label class="row" for="noEat"><span>Non mangiare le lettere<small>Rimette quelle mangiate e non ne tocca più, su tutti i siti</small></span><input type="checkbox" id="noEat"></label>
+  <label class="row" for="wpAuto"><span>Spacca la barra di WordPress<small>La toglie da solo su ogni pagina; per rimetterla scrivigli "rimetti la barra"</small></span><input type="checkbox" id="wpAuto"></label>
+  <label class="row" id="siteRow" for="site"><span>Nascondi su questo sito<small id="host"></small></span><input type="checkbox" id="site"></label>
+  <button class="primary fight" id="fight">🥊 Fai entrare l'omino</button>
+  <p class="empty" id="fightNote" hidden></p>
+
+  <h2>Intelligenza artificiale</h2>
+  <div class="ai">
+    <div class="status"><span class="dot" id="aiDot"></span><span id="aiStatus">Controllo…</span></div>
+    <p id="aiInfo">Gemini Nano, integrato in Chrome: gira sul tuo computer, gratis e senza inviare i messaggi online.</p>
+    <button class="primary" id="aiGet" hidden>Scarica e attiva</button>
+  </div>
+  <label class="row" for="aiOn"><span>Risponde con l'AI<small>Altrimenti usa le risposte già scritte</small></span><input type="checkbox" id="aiOn"></label>
+  <label class="row" for="aiPage"><span>Può leggere la pagina<small>Per commentarla quando glielo chiedi</small></span><input type="checkbox" id="aiPage"></label>
+
+  <div class="memhead"><h2>Cosa ricorda di te</h2><button class="ghost" id="memClear" hidden>Cancella tutto</button></div>
+  <ul id="mem"></ul>
+  <p class="empty" id="memEmpty">Ancora niente: raccontagli qualcosa nella chat.</p>
+
+  <div class="memhead"><h2>Cronologia della chat</h2><button class="ghost" id="logClear" hidden>Cancella</button></div>
+  <p class="empty" id="logInfo">Ancora nessun messaggio.</p>
+
+  <p id="note">Sulla pagina, clicca Nimblu per il menu, la chat e il controllo UX.</p>
+  <script src="ai-core.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
