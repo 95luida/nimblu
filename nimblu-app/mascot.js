@@ -4263,22 +4263,22 @@ window.__MASCOT_SRC = function (opts) {
     if (kind === 'happy' || kind === 'shut') {
       ctx.beginPath();
       inT(T, function () { if (kind === 'happy') ctx.arc(0, 0.45, 0.95, 1.15 * Math.PI, 1.85 * Math.PI); else ctx.arc(0, -0.3, 0.95, 0.15 * Math.PI, 0.85 * Math.PI); });
-      ctx.lineWidth = 2.4; ctx.strokeStyle = INK; ctx.stroke();
+      ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(43,59,97,.85)'; ctx.stroke();
     } else {
       inT(T, function () {
         ctx.beginPath(); ctx.arc(0, 0, 1.1, 0, Math.PI * 2); ctx.fillStyle = '#fbf3e6'; ctx.fill();
         ctx.save(); ctx.clip();
         // iride scura che riempie quasi tutto l'occhio: nera in alto, marrone caldo in basso
-        var g = ctx.createLinearGradient(0, -1, 0, 1); g.addColorStop(0, '#1d1622'); g.addColorStop(0.55, '#33222a'); g.addColorStop(1, '#7a4a38');
-        ctx.beginPath(); ctx.ellipse(gx, gy + 0.02, 1.02, 1.06, 0, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
-        ctx.beginPath(); ctx.ellipse(gx, gy + 0.62, 0.62, 0.3, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(190,120,90,.35)'; ctx.fill();
-        ctx.beginPath(); ctx.ellipse(gx + 0.28, gy - 0.38, 0.42, 0.46, 0, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
-        ctx.beginPath(); ctx.arc(gx - 0.36, gy + 0.4, 0.17, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fill();
+        var g = ctx.createLinearGradient(0, -1, 0, 1); g.addColorStop(0, '#2b2129'); g.addColorStop(0.55, '#3f2c2f'); g.addColorStop(1, '#8c5c46');
+        ctx.beginPath(); ctx.ellipse(gx, gy + 0.03, 0.97, 1.02, 0, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(gx, gy + 0.6, 0.58, 0.28, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(200,135,100,.3)'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(gx + 0.27, gy - 0.36, 0.34, 0.38, 0, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.beginPath(); ctx.arc(gx - 0.34, gy + 0.38, 0.13, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill();
         if (kind === 'half') { ctx.fillStyle = BLUE; ctx.fillRect(-1.3, -1.3, 2.6, 1.2); }
         ctx.restore();
       });
       ctx.beginPath(); inT(T, function () { ctx.arc(0, 0, 1.1, 0, Math.PI * 2); });
-      ctx.lineWidth = 1.3; ctx.strokeStyle = 'rgba(43,59,97,.65)'; ctx.stroke();
+      ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(43,59,97,.45)'; ctx.stroke();
       if (kind === 'half') { ctx.beginPath(); inT(T, function () { ctx.moveTo(-1.1, -0.1); ctx.quadraticCurveTo(0, 0.05, 1.1, -0.1); }); ctx.lineWidth = 2; ctx.strokeStyle = INK; ctx.stroke(); }
     }
     ctx.restore();
@@ -4293,7 +4293,7 @@ window.__MASCOT_SRC = function (opts) {
   function drawMouth(FH, o) {
     var N = 16, up = [], lo = [], i0 = -1, i1 = -1, open = o.open, r = VY.r, i;
     for (i = 0; i <= N; i++) {
-      var t = -1 + 2 * i / N, th = t * 1.36, yy = 0.12 + 0.27 * (1 - Math.pow(Math.abs(t), 1.3)), a = muzPt(FH, th, yy);
+      var t = -1 + 2 * i / N, th = t * 1.08, yy = 0.2 + 0.15 * (1 - Math.pow(Math.abs(t), 1.4)), a = muzPt(FH, th, yy);
       up.push(a.q); lo.push(muzPt(FH, th, yy + open * 0.3 * (1 - t * t)).q);
       if (a.f > 0.03) { if (i0 < 0) i0 = i; i1 = i; }
     }
@@ -4309,16 +4309,16 @@ window.__MASCOT_SRC = function (opts) {
       var span = Math.hypot(U[n - 1][0] - U[0][0], U[n - 1][1] - U[0][1]);
       ellipse(tc[0], tc[1], span * 0.24, Math.max(1, Math.abs(Lo[m][1] - U[m][1]) * 0.42), TONGUE);
       ctx.restore();
-      ctx.lineWidth = 1.7; ctx.strokeStyle = INK; ctx.stroke();
+      ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(43,59,97,.8)'; ctx.stroke();
     } else {
       ctx.beginPath(); ctx.moveTo(U[0][0], U[0][1]); smoothThrough(U, 1);
-      ctx.lineWidth = 2.3; ctx.strokeStyle = INK; ctx.stroke();
+      ctx.lineWidth = 1.35; ctx.strokeStyle = 'rgba(43,59,97,.78)'; ctx.stroke();
     }
     // angoli della bocca all'insù
     [[i0 === 0, U[0], U[1]], [i1 === N, U[n - 1], U[n - 2]]].forEach(function (c) {
       if (!c[0]) return;
       var dx = c[1][0] - c[2][0], dy = c[1][1] - c[2][1], dm = Math.hypot(dx, dy) || 1;
-      line([c[1][0], c[1][1], c[1][0] + dx / dm * 0.035 * r, c[1][1] + dy / dm * 0.035 * r - 0.05 * r], 1.6, INK);
+      line([c[1][0], c[1][1], c[1][0] + dx / dm * 0.025 * r, c[1][1] + dy / dm * 0.025 * r - 0.035 * r], 1.1, 'rgba(43,59,97,.7)');
     });
   }
   // branchia: una grande piuma fatta di tre petali sovrapposti (come nell'illustrazione), azzurra alla base
@@ -4495,10 +4495,10 @@ window.__MASCOT_SRC = function (opts) {
     spotOn(surf(FH, O, SKULL, [0.1, -1, 0.3]), 0.42, 0.16, 'rgba(255,255,255,.24)');
     HEAD_SPOTS.forEach(function (h) { spotOn(surf(FH, O, SKULL, h), h[3], h[4], h[5] ? SPOT_L : SPOT); });
     [1, -1].forEach(function (z) { spotOn(surf(FH, O, SKULL, [0.6, 0.3, 0.76 * z]), 0.17, 0.1, o.blush ? 'rgba(236,143,134,.85)' : 'rgba(236,143,134,.5)'); });
-    [-1, 1].forEach(function (z) { drawEye(surf(FH, O, SKULL, [0.8, -0.12, 0.58 * z]), 0.215 * o.bigEye, 0.27 * o.bigEye, o); });
+    [-1, 1].forEach(function (z) { drawEye(surf(FH, O, SKULL, [0.8, -0.12, 0.58 * z]), 0.195 * o.bigEye, 0.245 * o.bigEye, o); });
     [-1, 1].forEach(function (z) {
       var s = surf(FH, MUZ_C, MUZ_R, [0.92, -0.3, 0.26 * z]);
-      if (s.f > 0.15) { var q = pj(s.p); ellipse(q[0], q[1], 0.028 * VY.r, 0.022 * VY.r, INK); }
+      if (s.f > 0.15) { var q = pj(s.p); ellipse(q[0], q[1], 0.022 * VY.r, 0.017 * VY.r, 'rgba(43,59,97,.7)'); }
     });
     drawMouth(FH, o);
     ctx.restore();
