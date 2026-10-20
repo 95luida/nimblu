@@ -7,11 +7,13 @@ chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     var u = new URL(tabs[0].url);
     if (/^(https?|file):$/.test(u.protocol)) host = u.hostname || 'file';
   } catch (e) {}
-  chrome.storage.local.get(['enabled', 'disabledHosts', 'uxAuto', 'talk', 'aiOn', 'aiPage', 'noEat', 'wpAuto'], function (s) {
+  chrome.storage.local.get(['enabled', 'disabledHosts', 'uxAuto', 'talk', 'aiOn', 'aiPage', 'noEat', 'wpAuto', 'noGlass'], function (s) {
     var hosts = s.disabledHosts || [];
     // spento di base: acceso rimette le lettere mangiate e smette di mangiarle ovunque
     $('noEat').checked = s.noEat === true;
     $('noEat').addEventListener('change', function () { chrome.storage.local.set({ noEat: $('noEat').checked }); });
+    $('noGlass').checked = s.noGlass === true;
+    $('noGlass').addEventListener('change', function () { chrome.storage.local.set({ noGlass: $('noGlass').checked }); });
     $('wpAuto').checked = s.wpAuto === true;
     $('wpAuto').addEventListener('change', function () { chrome.storage.local.set({ wpAuto: $('wpAuto').checked }); });
     [['on', 'enabled'], ['talk', 'talk'], ['ux', 'uxAuto'], ['aiOn', 'aiOn'], ['aiPage', 'aiPage']].forEach(function (p) {

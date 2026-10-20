@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Nimblu",
-  "version": "3.13.1",
+  "version": "3.13.2",
   "description": "Nimblu, la creatura del laghetto che vive sulle pagine: controlla UX, SEO e accessibilità, mangia lettere e fa a botte con l'omino.",
   "permissions": [
     "storage",

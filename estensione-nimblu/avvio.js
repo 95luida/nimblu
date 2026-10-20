@@ -16,8 +16,9 @@
         talk: s.talk !== false,
         water: s.water === true,
         noEat: s.noEat === true,
+        noGlass: s.noGlass === true,
         wpAuto: s.wpAuto === true,
-        onPrefs: function (p) { chrome.storage.local.set({ talk: p.talk, uxAuto: p.tips, water: p.water, noEat: p.noEat, wpAuto: p.wpAuto }); },
+        onPrefs: function (p) { chrome.storage.local.set({ talk: p.talk, uxAuto: p.tips, water: p.water, noEat: p.noEat, wpAuto: p.wpAuto, noGlass: p.noGlass }); },
         aiPage: s.aiPage !== false,
         // cronologia della chat comune a tutti i siti (ultimi 300 messaggi, solo su questo computer)
         history: {
@@ -56,7 +57,7 @@
       });
     } else {
       if (s.level && window.__mascot.setLevel) window.__mascot.setLevel(s.level);
-      if (window.__mascot.setPrefs) window.__mascot.setPrefs({ talk: s.talk !== false, tips: s.uxAuto !== false, water: s.water === true, noEat: s.noEat === true, wpAuto: s.wpAuto === true });
+      if (window.__mascot.setPrefs) window.__mascot.setPrefs({ talk: s.talk !== false, tips: s.uxAuto !== false, water: s.water === true, noEat: s.noEat === true, wpAuto: s.wpAuto === true, noGlass: s.noGlass === true });
     }
   }
   // comandi dal pannellino dell'estensione (es. "Fai entrare l'omino")
@@ -66,10 +67,10 @@
     if (ok) window.__mascot.act(m.act);
     reply({ ok: ok });
   });
-  function load() { chrome.storage.local.get(['enabled', 'disabledHosts', 'level', 'nimbluState', 'uxAuto', 'talk', 'aiOn', 'aiPage', 'water', 'noEat', 'wpAuto'], apply); }
+  function load() { chrome.storage.local.get(['enabled', 'disabledHosts', 'level', 'nimbluState', 'uxAuto', 'talk', 'aiOn', 'aiPage', 'water', 'noEat', 'wpAuto', 'noGlass'], apply); }
   load();
   chrome.storage.onChanged.addListener(function (changes) {
     // lo stato salvato di continuo non deve rimettere in moto nulla
-    if (changes.enabled || changes.disabledHosts || changes.level || changes.talk || changes.uxAuto || changes.water || changes.noEat || changes.wpAuto) load();
+    if (changes.enabled || changes.disabledHosts || changes.level || changes.talk || changes.uxAuto || changes.water || changes.noEat || changes.wpAuto || changes.noGlass) load();
   });
 })();

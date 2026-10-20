@@ -47,7 +47,7 @@ window.__MASCOT_SRC = function (opts) {
 
   // messaggi che dice da solo: talk = chiacchiere, tips = consigli UX automatici
   function storedPrefs() { try { return JSON.parse(localStorage.getItem('__nimblu_prefs') || '{}'); } catch (e) { return {}; } }
-  var prefs = { talk: true, tips: true, water: false, noEat: false, wpAuto: false }, sp0 = storedPrefs();
+  var prefs = { talk: true, tips: true, water: false, noEat: false, wpAuto: false, noGlass: false }, sp0 = storedPrefs();
   if (typeof sp0.talk === 'boolean') prefs.talk = sp0.talk;
   if (typeof sp0.tips === 'boolean') prefs.tips = sp0.tips;
   if (typeof opts.talk === 'boolean') prefs.talk = opts.talk;
@@ -58,6 +58,9 @@ window.__MASCOT_SRC = function (opts) {
   if (typeof opts.noEat === 'boolean') prefs.noEat = opts.noEat;
   if (typeof sp0.wpAuto === 'boolean') prefs.wpAuto = sp0.wpAuto;
   if (typeof opts.wpAuto === 'boolean') prefs.wpAuto = opts.wpAuto;
+  // noGlass: niente salti verso chi guarda (contro il vetro dello schermo) durante le corse pazze
+  if (typeof sp0.noGlass === 'boolean') prefs.noGlass = sp0.noGlass;
+  if (typeof opts.noGlass === 'boolean') prefs.noGlass = opts.noGlass;
   if (opts.app) prefs.tips = false; // nell'app non c'è una pagina da controllare
   function storedLevel() { try { return localStorage.getItem('__nimblu_level'); } catch (e) { return null; } }
   var level = LEVELS[opts.level] ? opts.level : LEVELS[storedLevel()] ? storedLevel() : 'normale';
@@ -110,6 +113,7 @@ window.__MASCOT_SRC = function (opts) {
     '#__nimblu .seg button:hover{background:#cfdcf0}' +
     '#__nimblu .seg button[aria-pressed=true]{background:#4f74b3;color:#fff}' +
     '#__nimblu .seg.two{grid-template-columns:1fr 1fr}' +
+    '#__nimblu .seg.three{grid-template-columns:1fr 1fr 1fr}' +
     '#__nimblu .g{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 0 8px}' +
     '#__nimblu form{display:flex;gap:6px;margin:0}' +
     '#__nimblu input{all:unset;box-sizing:border-box;flex:1;min-width:0;background:#fff;border:1.5px solid #b7c8e6;border-radius:9px;padding:7px 9px;font:500 13px/1.2 system-ui,-apple-system,sans-serif;color:#22314f;cursor:text}' +
@@ -134,8 +138,8 @@ window.__MASCOT_SRC = function (opts) {
     '<button type="button" data-l="vivace">Vivace</button><button type="button" data-l="normale">Normale</button>' +
     '<button type="button" data-l="calmo">Calmo</button><button type="button" data-l="angolo" title="Va in basso a destra: sta seduto, si guarda intorno o dorme">↘ Angolo</button>' +
     '</div>' +
-    '<div class="lbl">Acqua e lettere</div>' +
-    '<div class="seg two"><button type="button" data-p="water">🌊 Acqua sulla pagina</button><button type="button" data-p="noEat">🙅 Non mangia lettere</button></div>' +
+    '<div class="lbl">Acqua, lettere e schermo</div>' +
+    '<div class="seg three"><button type="button" data-p="water">🌊 Acqua sulla pagina</button><button type="button" data-p="noEat">🙅 Non mangia lettere</button><button type="button" data-p="noGlass" title="Nelle corse pazze non salta più contro lo schermo">🪟 Non salta sullo schermo</button></div>' +
     '<div class="wpb" hidden><div class="lbl">Barra nera di WordPress</div>' +
     '<div class="seg two"><button type="button" data-a="wpbar">💥 Spaccala</button><button type="button" data-p="wpAuto" title="La spacca da solo su ogni pagina">🔁 Sempre</button></div></div>' +
     '<div class="lbl">Messaggi che dice da solo</div>' +
@@ -1501,7 +1505,7 @@ window.__MASCOT_SRC = function (opts) {
         // a metà corsa: inciampa, prova il vetro, salta su un elemento
         if (z.sp > max * 0.8 && z.t > 18) {
           if (Math.random() < 0.0035 * dt) { z.sub = 'trip'; z.t = 0; break; }
-          if (z.laps > 0 && !z.glassDone && Math.random() < 0.004 * dt) { startGlass(); break; }
+          if (z.laps > 0 && !z.glassDone && !prefs.noGlass && Math.random() < 0.004 * dt) { startGlass(); break; }
           if (b.floor && frame % 12 === 0 && Math.random() < 0.3) {
             var lg = ledgeAhead(z.dir);
             if (lg) { z.after = 'run'; jumpTo(lg); M.squash = 0.6; if (Math.random() < 0.4) chat2('Hop! 😼'); break; }
@@ -3581,13 +3585,14 @@ window.__MASCOT_SRC = function (opts) {
       if (M.hunt && M.hunt.kind === 'letter') { M.hunt = null; M.pounce = null; if (M.mode === 'stalk' || M.mode === 'chase') idle(20); }
       if (M.mode === 'eat') { M.eat = null; idle(20); }
     }
+    if (k === 'noGlass' && v && M.zoom && M.zoom.sub === 'glass') endZoom(true); // se stava saltando verso lo schermo, smette subito
     var b = menu.querySelector('button[data-p="' + k + '"]');
     if (b) { b.setAttribute('aria-pressed', v ? 'true' : 'false'); b.title = v ? 'Attivo: clicca per spegnere' : 'Spento: clicca per accendere'; }
   }
   function savePrefs() {
     if (opts.onPrefs) opts.onPrefs(prefs); else { try { localStorage.setItem('__nimblu_prefs', JSON.stringify(prefs)); } catch (e) {} }
   }
-  setPref('talk', prefs.talk); setPref('tips', prefs.tips); setPref('water', prefs.water); setPref('noEat', prefs.noEat); setPref('wpAuto', prefs.wpAuto);
+  setPref('talk', prefs.talk); setPref('tips', prefs.tips); setPref('water', prefs.water); setPref('noEat', prefs.noEat); setPref('wpAuto', prefs.wpAuto); setPref('noGlass', prefs.noGlass);
   function menuClick(e) {
     var pb = e.target.closest('button[data-p]');
     if (pb) {
@@ -3597,6 +3602,7 @@ window.__MASCOT_SRC = function (opts) {
       if (k === 'water') { if (prefs.water) { say('Evviva, acqua! 🌊'); later(goSwim, 700); } else say('Asciutto di nuovo.'); return; }
       if (k === 'wpAuto') { if (prefs.wpAuto) { say('Da ora la barra di WordPress la spacco sempre io! 💥'); if (wpBar()) later(function () { wpSmash(true); closeMenu(); }, 600); } else say('Ok, la lascio stare.'); menuWp(); return; }
       if (k === 'noEat') { say(prefs.noEat ? 'Promesso: ho rimesso tutte le lettere e non ne mangio più! 🙅' : 'Evviva, si torna a sgranocchiare! 😋'); return; }
+      if (k === 'noGlass') { say(prefs.noGlass ? 'Va bene, niente più tuffi contro lo schermo. 🪟' : 'Evviva! Ogni tanto provo a uscire dal vetro 😆'); return; }
       say(k === 'talk' ? (prefs.talk ? 'Ok, torno a chiacchierare!' : 'Va bene, parlo solo se mi chiami.') : (prefs.tips ? 'Ti segnalerò i problemi della pagina.' : 'Niente più consigli, a meno che non premi 🔍.'));
       return;
     }
@@ -3774,6 +3780,8 @@ window.__MASCOT_SRC = function (opts) {
         later(startBallChase, 300); return B.held === 'nimblu' ? 'Ce l\'ho io! 😸' : 'Vado a prenderla! 🎾';
       }],
       [/non vedent|ciech|cieco|ipovedent|screen ?reader|lettore di schermo|accessibil|testi alternativ|\balt\b|descrizion[ei] (delle |alle )?immagin/, function () { later(function () { openUx(false, 'a11y'); }, 400); return 'Ti dico come migliorare la pagina per chi non vede... ♿'; }],
+      [/(non|niente|basta|smetti).{0,20}(salt|tuff).{0,20}(schermo|vetro)|(schermo|vetro).{0,15}(non|niente|basta)/, function () { setPref('noGlass', true); savePrefs(); return 'Va bene, niente più tuffi contro lo schermo. 🪟'; }],
+      [/(puoi|torna a|di nuovo).{0,20}(salt|tuff).{0,20}(schermo|vetro)/, function () { setPref('noGlass', false); savePrefs(); return 'Evviva! Ogni tanto provo a uscire dal vetro 😆'; }],
       [/corri|corsa|scatenat|zoomies|impazz|5 minuti/, function () { later(startZoom, 300); return pick(['Si corre! 🏃💨', 'Corsa pazza!', 'Preparati... VIA!']); }],
       [/dove sei|vieni fuori|esci fuori|ti ho trovato|trovato/, function () { if (M.att && M.att.k === 'cover') { later(function () { exitCover('pop'); }, 300); return 'Eccomi! Bu! 👀'; } return 'Sono qui!'; }],
       [/nascondit|nascondino|nasconderti/, function () { later(function () { coverCmd('hide'); }, 400); return 'Conta fino a dieci... 🙈'; }],
@@ -6368,7 +6376,7 @@ window.__MASCOT_SRC = function (opts) {
   window.__mascot = {
     stop: stop, M: M,
     setLevel: function (l) { setLevel(l, true); if (level === l && M.att) idle(20); },
-    setPrefs: function (p) { if (typeof p.talk === 'boolean') setPref('talk', p.talk); if (typeof p.tips === 'boolean') setPref('tips', p.tips); if (typeof p.water === 'boolean') setPref('water', p.water); if (typeof p.noEat === 'boolean') setPref('noEat', p.noEat); if (typeof p.wpAuto === 'boolean') setPref('wpAuto', p.wpAuto); },
+    setPrefs: function (p) { if (typeof p.talk === 'boolean') setPref('talk', p.talk); if (typeof p.tips === 'boolean') setPref('tips', p.tips); if (typeof p.water === 'boolean') setPref('water', p.water); if (typeof p.noEat === 'boolean') setPref('noEat', p.noEat); if (typeof p.wpAuto === 'boolean') setPref('wpAuto', p.wpAuto); if (typeof p.noGlass === 'boolean') setPref('noGlass', p.noGlass); },
     // per l'app: fargli dire o fare qualcosa, o mandargli un messaggio come dalla chat
     say: function (t) { say(t); },
     act: function (n) { if (ACTIONS[n]) ACTIONS[n](); },
