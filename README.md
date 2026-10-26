@@ -2,7 +2,7 @@
 
 # Nimblu
 
-**Un’estensione per Chrome che controlla UX, SEO, GEO (le risposte delle AI) e accessibilità di qualsiasi pagina web. E intanto ci vive sopra.**
+**Un’estensione per Chrome che controlla UX, SEO, GEO e AEO (le risposte delle AI e dei motori di risposta) e accessibilità di qualsiasi pagina web. E intanto ci vive sopra.**
 
 Nimblu è una mascotte (un axolotl) che cammina sulle pagine che visiti. Quando glielo chiedi, controlla la pagina e ti dice cosa migliorare: ogni problema ha un voto, una spiegazione e un clic che ti porta dritto all’elemento da sistemare. Nelle pause gioca: fa a botte con l’omino del jetpack, corre come i gatti, insegue la pallina e mangia le lettere (poi le ridà).
 
@@ -14,7 +14,7 @@ Nimblu è una mascotte (un axolotl) che cammina sulle pagine che visiti. Quando 
 
 ## Il controllo della pagina
 
-Clicca Nimblu → **🔍 Controlla la pagina**. Si apre un pannello con quattro schede (UX, SEO, GEO e Non vedenti), ognuna con il suo voto da 0 a 100 e le barre per categoria. Le regole sono quasi 100, fisse, e girano tutte nel browser (la scheda GEO legge anche `robots.txt` e `llms.txt` del sito).
+Clicca Nimblu → **🔍 Controlla la pagina**. Si apre un pannello con cinque schede (UX, SEO, GEO, AEO e Non vedenti), ognuna con il suo voto da 0 a 100 e le barre per categoria. Le regole sono più di 100, fisse, e girano tutte nel browser (la scheda GEO legge anche `robots.txt` e `llms.txt` del sito).
 
 | UX e conversione | SEO | Non vedenti |
 |---|---|---|
@@ -44,6 +44,16 @@ Clicca Nimblu → **🔍 Controlla la pagina**. Si apre un pannello con quattro 
 <p align="center"><img src="docs/img/pannello-geo.png" width="300" alt="Scheda GEO con voto 64: barre Accesso AI, Risposte, Fiducia, Dati strutturati e la tabella segnale per segnale con il JSON-LD pronto da copiare"></p>
 
 Tutto finisce in una **tabella segnale per segnale**: cosa c’è sulla pagina, come migliorarlo, quanti punti vale e, dove si può, il testo pronto da copiare (righe per il `robots.txt`, JSON-LD FAQPage costruito dalle domande della pagina, Organization con i social trovati, bozza di `llms.txt`).
+
+**AEO** (Answer Engine Optimization): le risposte dirette nei riquadri in evidenza di Google, in «Le persone chiedono anche» e negli assistenti vocali
+- *Risposte brevi:* sotto ogni domanda una risposta di 40-60 parole che parte dalla risposta (senza «Ecco…», «In questo articolo…»), una definizione chiara «X è…»;
+- *Domande:* titoli scritti come domande intere, come le fa la gente, e un blocco di domande correlate;
+- *Formati:* passaggi numerati per le procedure, tabelle per prezzi e confronti, elenchi brevi;
+- *Voce e schema:* frasi brevi da leggere ad alta voce, JSON-LD FAQPage già riempito con le domande della pagina, Speakable, LocalBusiness con indirizzo, telefono e orari per le domande vocali «vicino a me».
+
+<p align="center"><img src="docs/img/pannello-aeo.png" width="300" alt="Scheda AEO: barre Risposte brevi, Domande, Formati, Voce e schema e la tabella segnale per segnale"></p>
+
+Anche qui una tabella segnale per segnale, con il testo pronto da copiare.
 
 **Non vedenti** (per chi usa lo screen reader)
 
