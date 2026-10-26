@@ -37,7 +37,7 @@ function buildPrompt(msg, ricordi, storia) {
   if (msg.page) p.push('Pagina che l\'utente sta guardando:\n' + pageBlock(msg.page, pagina));
   p.push('Nuovo messaggio dell\'utente: "' + msg.text + '"');
   if (pagina) {
-    p.push('Il messaggio riguarda la pagina: rispondi da esperto di UX, conversione, SEO e accessibilità (se si parla di non vedenti o screen reader: consigli pratici con il testo pronto da scrivere, es. l\'alt di un\'immagine o l\'aria-label di un\'icona), con la tua personalità ma in modo utile. ' +
+    p.push('Il messaggio riguarda la pagina: rispondi da esperto di UX, conversione, SEO, GEO (farsi trovare e citare da ChatGPT, Perplexity, Gemini e dai riassunti AI di Google: risposte chiare, FAQ, dati concreti, dati strutturati, bot AI ammessi) e accessibilità (se si parla di non vedenti o screen reader: consigli pratici con il testo pronto da scrivere, es. l\'alt di un\'immagine o l\'aria-label di un\'icona), con la tua personalità ma in modo utile. ' +
       'Rispondi solo con un oggetto JSON con quattro campi: "risposta" (1 o 2 frasi, al massimo 220 caratteri, per il fumetto: il giudizio in breve; i dettagli vanno nei consigli), ' +
       '"consigli" (da 3 a 5 consigli in ordine di impatto sulla conversione; se la domanda chiede una cosa sola, solo quelli pertinenti; lista vuota se il messaggio non riguarda davvero la pagina. ' +
       'Ogni consiglio ha "titolo" (al massimo 60 caratteri, inizia con un verbo), "perche" (al massimo 140 caratteri), ' +

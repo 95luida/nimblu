@@ -2,7 +2,7 @@
 
 # Nimblu
 
-**Un’estensione per Chrome che controlla UX, SEO e accessibilità di qualsiasi pagina web. E intanto ci vive sopra.**
+**Un’estensione per Chrome che controlla UX, SEO, GEO (le risposte delle AI) e accessibilità di qualsiasi pagina web. E intanto ci vive sopra.**
 
 Nimblu è una mascotte (un axolotl) che cammina sulle pagine che visiti. Quando glielo chiedi, controlla la pagina e ti dice cosa migliorare: ogni problema ha un voto, una spiegazione e un clic che ti porta dritto all’elemento da sistemare. Nelle pause gioca: fa a botte con l’omino del jetpack, corre come i gatti, insegue la pallina e mangia le lettere (poi le ridà).
 
@@ -14,7 +14,7 @@ Nimblu è una mascotte (un axolotl) che cammina sulle pagine che visiti. Quando 
 
 ## Il controllo della pagina
 
-Clicca Nimblu → **🔍 Controlla la pagina**. Si apre un pannello con tre schede, ognuna con il suo voto da 0 a 100 e le barre per categoria. Le regole sono 80, fisse, e girano tutte nel browser.
+Clicca Nimblu → **🔍 Controlla la pagina**. Si apre un pannello con quattro schede (UX, SEO, GEO e Non vedenti), ognuna con il suo voto da 0 a 100 e le barre per categoria. Le regole sono quasi 100, fisse, e girano tutte nel browser (la scheda GEO legge anche `robots.txt` e `llms.txt` del sito).
 
 | UX e conversione | SEO | Non vedenti |
 |---|---|---|
@@ -34,6 +34,16 @@ Clicca Nimblu → **🔍 Controlla la pagina**. Si apre un pannello con tre sche
 - immagini e link: testi alternativi, nomi dei file, link interni, link generici;
 - tecnica: noindex/nofollow, canonical, lingua, HTTPS, indirizzo, favicon;
 - social e dati: Open Graph e dati strutturati schema.org.
+
+**GEO** (Generative Engine Optimization): farsi trovare e citare da ChatGPT, Perplexity, Gemini e dai riassunti AI di Google
+- *Accesso AI:* il `robots.txt` lascia entrare i bot delle risposte (OAI-SearchBot, ChatGPT-User, PerplexityBot, Claude-SearchBot, Bingbot, Googlebot)? Il testo si legge anche senza JavaScript? Niente `nosnippet`? C’è un `llms.txt`?
+- *Risposte:* riassunto iniziale chiaro, titoli scritti come domande, FAQ, elenchi e tabelle, dati concreti (m², €, %, date), paragrafi brevi;
+- *Fiducia:* chi parla (azienda o autore), data di aggiornamento, fonti esterne citate, contatti;
+- *Dati strutturati:* JSON-LD presente, azienda riconoscibile (Organization con i profili social in `sameAs`), BreadcrumbList.
+
+<p align="center"><img src="docs/img/pannello-geo.png" width="300" alt="Scheda GEO con voto 64: barre Accesso AI, Risposte, Fiducia, Dati strutturati e la tabella segnale per segnale con il JSON-LD pronto da copiare"></p>
+
+Tutto finisce in una **tabella segnale per segnale**: cosa c’è sulla pagina, come migliorarlo, quanti punti vale e, dove si può, il testo pronto da copiare (righe per il `robots.txt`, JSON-LD FAQPage costruito dalle domande della pagina, Organization con i social trovati, bozza di `llms.txt`).
 
 **Non vedenti** (per chi usa lo screen reader)
 

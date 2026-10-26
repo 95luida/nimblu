@@ -151,7 +151,7 @@ window.__MASCOT_SRC = function (opts) {
     '<button type="button" data-a="hide">🙈 Nasconditi</button><button type="button" data-a="peek">👀 Sbircia</button><button type="button" data-a="climb">🧗 Arrampica</button>' +
     '<button type="button" data-a="zoom" title="Corsa pazza, come i gatti">🏃 Corri!</button><button type="button" data-a="ball" title="Una pallina da lanciargli">🎾 Pallina</button><button type="button" class="fightb" data-a="fight" title="Fai entrare l\'omino del jetpack">🥊 Omino</button>' +
     '</div>' +
-    '<button type="button" class="uxb" data-a="ux">🔍 Controlla la pagina: UX, SEO e non vedenti</button>' +
+    '<button type="button" class="uxb" data-a="ux">🔍 Controlla la pagina: UX, SEO, GEO e non vedenti</button>' +
     '<form><input type="text" maxlength="200" placeholder="Scrivi a Nimblu…" aria-label="Messaggio per Nimblu"><button type="submit">Invia</button><button type="button" class="hist" data-a="hist" title="Cronologia della chat" aria-label="Cronologia della chat">🕘</button></form>' +
     '<div class="row"><button type="button" class="bye" data-a="spit">↩️ Ridai le lettere</button><button type="button" class="bye" data-a="bye">👋 ' + (opts.persistent ? 'Nascondi' : 'Chiudi') + '</button></div>';
   var bubble = mk('div');
@@ -3649,7 +3649,7 @@ window.__MASCOT_SRC = function (opts) {
     // durante la rissa: "basta" o le mosse di Nimblu
     if (F) { var fr = fightChat(q); if (fr) { say(fr); logMsg('nimblu', fr); return; } }
     // comandi che devono funzionare sempre, anche senza AI
-    if (opts.ai && !FIGHT_Q.test(q) && !/pallina|\bpalla\b|lanciamela|corri\b|corsa pazza|zoomies|scatenat|zitto|silenzio|basta parlare|non parlare|^parla|chiacchier|ridai|restituisci|sputa|non mangiare|smetti di mangiare|torna a mangiare|puoi mangiare|barra|cronologia|non vedent|ciech|cieco|ipovedent|screen ?reader/i.test(q)) { askAi(q, force); return; }
+    if (opts.ai && !FIGHT_Q.test(q) && !/pallina|\bpalla\b|lanciamela|corri\b|corsa pazza|zoomies|scatenat|zitto|silenzio|basta parlare|non parlare|^parla|chiacchier|ridai|restituisci|sputa|non mangiare|smetti di mangiare|torna a mangiare|puoi mangiare|barra|cronologia|non vedent|ciech|cieco|ipovedent|screen ?reader|\bgeo\b|llms\.txt/i.test(q)) { askAi(q, force); return; }
     say('...');
     M.reply = { q: q, t: 30 };
   }
@@ -3663,7 +3663,7 @@ window.__MASCOT_SRC = function (opts) {
     mangia: function () { M.plan = []; planEat(); }, angolo: function () { setLevel('angolo', true); if (opts.onLevel) opts.onLevel('angolo'); else { try { localStorage.setItem('__nimblu_level', 'angolo'); } catch (e) {} } M.plan = []; idle(10); }, controlla: function () { openUx(); }
   };
   // domande sulla pagina (e quelle che seguono entro 3 minuti): l'AI riceve una scheda completa e risponde con consigli
-  var PAGE_Q = /pagina|sito|meta ?description|parole chiave|keyword|indicizz|posizionament|google|h1|h2|\bux\b|conversion|design|landing|cosa ne pensi|miglior|problem|error|bottone|pulsante|testo|titolo|leggi|consigl|\bcta\b|call to action|seo|form\b|modulo|mobile|cellulare|veloc|lent|color|contrast|immagin|foto|clienti|vend|contatt|header|menu|footer|layout|sezion|funnel|prezz|offert|accessibil|non vedent|screen ?reader|\balt\b/i;
+  var PAGE_Q = /pagina|sito|meta ?description|parole chiave|keyword|indicizz|posizionament|google|h1|h2|\bux\b|conversion|design|landing|cosa ne pensi|miglior|problem|error|bottone|pulsante|testo|titolo|leggi|consigl|\bcta\b|call to action|seo|form\b|modulo|mobile|cellulare|veloc|lent|color|contrast|immagin|foto|clienti|vend|contatt|header|menu|footer|layout|sezion|funnel|prezz|offert|accessibil|non vedent|screen ?reader|\balt\b|\bgeo\b|chatgpt|perplexity|gemini|ai overview|\bllm/i;
   // seguiti di una domanda sulla pagina ("e il secondo?", "come lo faccio?"), ma non le chiacchiere
   var FOLLOW_Q = /\b(come|perch|qual|primo|prima|second|terz|quart|quint|quell|quest|spiega|esempi|altr|ancora|di più|meglio|dove|fallo|scrivi|riscriv|proponi|suggerisci|e se)/i;
   var CHAT_Q = /ti chiami|chi sei|come stai|ciao|grazie|buongiorno|buonasera|ti voglio bene|brav/i;
@@ -3708,7 +3708,13 @@ window.__MASCOT_SRC = function (opts) {
     info.stats += ', voti UX ' + uxScore() + '/100 (' + catScores('ux').map(function (c) { return c.name + ' ' + c.sc; }).join(', ') + '), voti SEO ' + seoScore() + '/100 (' + catScores('seo').map(function (c) { return c.name + ' ' + c.sc; }).join(', ') + ')';
     a11yAudit();
     info.stats += ', voto per chi non vede (screen reader) ' + a11yScore() + '/100 (' + catScores('a11y').map(function (c) { return c.name + ' ' + c.sc; }).join(', ') + ')';
-    ux.aiRefs = ux.tab === 'a11y'
+    geoAudit();
+    info.stats += ', voto GEO (farsi citare dalle AI) ' + geoScore() + '/100 (' + catScores('geo').map(function (c) { return c.name + ' ' + c.sc; }).join(', ') + ')';
+    ux.aiRefs = ux.tab === 'geo'
+      ? (geo.list || []).filter(function (f) { return f.sev !== 'ok' && !f.pending; }).sort(function (a, b) { return geoGain(b) - geoGain(a); }).slice(0, 8)
+        .map(function (f) { return { sev: f.sev, title: 'GEO: ' + f.title, detail: (f.value ? 'Sulla pagina: ' + f.value + '. ' : '') + f.detail, els: f.els }; })
+        .concat((seo.list || []).filter(function (f) { return f.sev !== 'ok'; }).slice(0, 4).map(function (f) { return { sev: f.sev, title: 'SEO: ' + f.title, detail: f.detail, els: f.els }; }))
+      : ux.tab === 'a11y'
       ? (a11y.list || []).filter(function (f) { return f.sev !== 'ok'; }).sort(function (a, b) { return a11yGain(b) - a11yGain(a); }).slice(0, 8)
         .map(function (f) { return { sev: f.sev, title: 'Non vedenti: ' + f.title, detail: f.detail + (f.sug && f.sug[0] ? ' Esempio: ' + f.sug[0] : f.code ? ' Da aggiungere: ' + f.code : ''), els: f.els, sug: f.sug }; })
         .concat((ux.list || []).filter(function (f) { return f.sev !== 'ok'; }).slice(0, 4))
@@ -3779,6 +3785,7 @@ window.__MASCOT_SRC = function (opts) {
         if (!B) { later(spawnBall, 200); return 'Una pallina! 🎾 Prendila e lanciamela!'; }
         later(startBallChase, 300); return B.held === 'nimblu' ? 'Ce l\'ho io! 😸' : 'Vado a prenderla! 🎾';
       }],
+      [/\bgeo\b|generative engine|chatgpt|perplexity|gemini|ai overview|riassunt[io] (ai|dell.ai)|motori (di ricerca )?(ai|generativ)|\bllm\b|llms\.txt|(trovare|citare|citat[oa]) dall[ae]? (ai|intelligenz)/, function () { later(function () { openUx(false, 'geo'); }, 400); return 'Guardo la pagina con gli occhi delle AI... 🤖'; }],
       [/non vedent|ciech|cieco|ipovedent|screen ?reader|lettore di schermo|accessibil|testi alternativ|\balt\b|descrizion[ei] (delle |alle )?immagin/, function () { later(function () { openUx(false, 'a11y'); }, 400); return 'Ti dico come migliorare la pagina per chi non vede... ♿'; }],
       [/(non|niente|basta|smetti).{0,20}(salt|tuff).{0,20}(schermo|vetro)|(schermo|vetro).{0,15}(non|niente|basta)/, function () { setPref('noGlass', true); savePrefs(); return 'Va bene, niente più tuffi contro lo schermo. 🪟'; }],
       [/(puoi|torna a|di nuovo).{0,20}(salt|tuff).{0,20}(schermo|vetro)/, function () { setPref('noGlass', false); savePrefs(); return 'Evviva! Ogni tanto provo a uscire dal vetro 😆'; }],
@@ -5222,7 +5229,8 @@ window.__MASCOT_SRC = function (opts) {
   var CATS = {
     ux: [['Funziona', '🧰'], ['Leggibilità', '👀'], ['Velocità', '⚡'], ['Accessibilità', '♿'], ['Conversione', '🎯']],
     seo: [['Google', '🔎'], ['Titoli', '🔠'], ['Testi', '📝'], ['Immagini e link', '🖼️'], ['Tecnica', '⚙️'], ['Social e dati', '🔗']],
-    a11y: [['Immagini', '🖼️'], ['Link e bottoni', '🔗'], ['Moduli', '📝'], ['Struttura', '🧭'], ['Video e frame', '🎬'], ['Tastiera', '⌨️']]
+    a11y: [['Immagini', '🖼️'], ['Link e bottoni', '🔗'], ['Moduli', '📝'], ['Struttura', '🧭'], ['Video e frame', '🎬'], ['Tastiera', '⌨️']],
+    geo: [['Accesso AI', '🤖'], ['Risposte', '💬'], ['Fiducia', '🏅'], ['Dati strutturati', '🧩']]
   };
   function scoreOf(list, cat) {
     var tot = 0, got = 0;
@@ -5237,7 +5245,8 @@ window.__MASCOT_SRC = function (opts) {
       .map(function (c) { return { name: c[0], icon: c[1], sc: scoreOf(list, c[0]) }; });
   }
   function uxScore() { return scoreOf(ux.list); }
-  function tabList(tab) { return (tab === 'seo' ? seo.list : tab === 'a11y' ? a11y.list : ux.list) || []; }
+  function tabList(tab) { return (tab === 'seo' ? seo.list : tab === 'a11y' ? a11y.list : tab === 'geo' ? geo.list : ux.list) || []; }
+  function curTab() { return /^(seo|a11y|geo)$/.test(ux.tab) ? ux.tab : 'ux'; }
 
   // ---------- controllo SEO ----------
   // Regole fisse (niente IA) su quello che leggono i motori di ricerca: titolo e meta description (con l'anteprima del
@@ -5890,6 +5899,262 @@ window.__MASCOT_SRC = function (opts) {
     return html;
   }
 
+  // ---------- GEO: farsi trovare e citare dalle AI ----------
+  // Generative Engine Optimization: ChatGPT, Perplexity, Gemini e i riassunti AI di Google leggono la pagina e ne
+  // citano dei pezzi. Contano l'accesso dei loro bot (robots.txt, testo leggibile senza JavaScript, niente nosnippet),
+  // risposte chiare (riassunto iniziale, domande nei titoli, FAQ, elenchi, numeri), la fiducia (chi parla, data,
+  // fonti) e i dati strutturati che dicono chi è l'azienda. Per ogni segnale una riga della tabella: cosa c'è sulla
+  // pagina, come migliorarlo e, dove si può, il testo pronto da copiare. robots.txt, llms.txt e l'HTML "crudo" si
+  // leggono con fetch (solo quando si apre il pannello); finché non arrivano, le righe dicono «sto controllando».
+  var geo = { list: null, net: { state: 'idle' } };
+  var GEO_SEARCH_BOTS = ['OAI-SearchBot', 'ChatGPT-User', 'PerplexityBot', 'Claude-SearchBot', 'Bingbot', 'Googlebot'];
+  var GEO_TRAIN_BOTS = ['GPTBot', 'ClaudeBot', 'Google-Extended', 'CCBot', 'Applebot-Extended'];
+  function geoFetch(force) {
+    var n = geo.net;
+    if (!/^https?:$/.test(location.protocol) || n.state === 'loading' || (n.state === 'done' && !force)) return;
+    n.state = 'loading';
+    function get(u) { return fetch(u, { credentials: 'omit', redirect: 'follow' }).then(function (r) { return r.ok ? r.text().then(function (t) { return { t: t, type: r.headers.get('content-type') || '' }; }) : null; }).catch(function () { return { err: true }; }); }
+    Promise.all([get(location.origin + '/robots.txt'), get(location.origin + '/llms.txt'), get(location.href.split('#')[0])]).then(function (r) {
+      n.robotsErr = !!(r[0] && r[0].err);
+      n.robots = r[0] && !r[0].err && !/html/i.test(r[0].type) ? r[0].t : null;
+      n.llms = !!(r[1] && !r[1].err && !/html/i.test(r[1].type) && r[1].t.trim().length > 20);
+      if (r[2] && !r[2].err && /html/i.test(r[2].type)) {
+        try {
+          var d = new DOMParser().parseFromString(r[2].t, 'text/html');
+          [].forEach.call(d.querySelectorAll('script,style,noscript,template,svg'), function (e) { e.remove(); });
+          n.rawWords = ((d.body && d.body.textContent) || '').split(/\s+/).filter(function (w) { return /[a-zà-ÿ0-9]{2}/i.test(w); }).length;
+        } catch (e) { n.rawWords = null; }
+      } else n.rawWords = null;
+      n.state = 'done';
+      geoAudit();
+      if (uxPanel.style.display === 'block' && ux.tab === 'geo') renderUx();
+      if (geo.sayAfter) { geo.sayAfter = false; geoSay(); }
+    });
+  }
+  // robots.txt: per ogni bot il gruppo più specifico (o quello di tutti, *) e se la pagina corrente è vietata
+  function robotsBlocks(txt, bot, path) {
+    var groups = [], g = null, lastUA = false;
+    String(txt || '').split(/\r?\n/).forEach(function (line) {
+      var m = /^\s*([a-z-]+)\s*:\s*(.*?)\s*(#.*)?$/i.exec(line);
+      if (!m) return;
+      var k = m[1].toLowerCase(), v = m[2];
+      if (k === 'user-agent') { if (!lastUA || !g) { g = { ua: [], rules: [] }; groups.push(g); } g.ua.push(v.toLowerCase()); lastUA = true; return; }
+      lastUA = false;
+      if (g && (k === 'disallow' || k === 'allow')) g.rules.push({ allow: k === 'allow', p: v });
+    });
+    var b = bot.toLowerCase(), mine = groups.filter(function (x) { return x.ua.some(function (u) { return u !== '*' && b.indexOf(u) === 0; }); });
+    if (!mine.length) mine = groups.filter(function (x) { return x.ua.indexOf('*') >= 0; });
+    var best = null;
+    mine.forEach(function (x) { x.rules.forEach(function (r) {
+      if (!r.p) return;
+      var re = new RegExp('^' + r.p.replace(/[.+?^{}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\\\$$|\$$/, '$'));
+      if (re.test(path) && (!best || r.p.length > best.p.length || (r.p.length === best.p.length && r.allow))) best = r;
+    }); });
+    return !!best && !best.allow;
+  }
+  function geoNodes() {
+    var nodes = [];
+    [].forEach.call(document.querySelectorAll('script[type="application/ld+json"]'), function (sc) {
+      try {
+        (function walk(o) {
+          if (!o || typeof o !== 'object') return;
+          if (Array.isArray(o)) { o.forEach(walk); return; }
+          if (o['@type']) nodes.push(o);
+          if (o['@graph']) walk(o['@graph']);
+        })(JSON.parse(sc.textContent));
+      } catch (e) {}
+    });
+    return nodes;
+  }
+  function geoType(n, re) { return [].concat(n['@type'] || []).some(function (t) { return re.test(t); }); }
+  function geoJson(o) { return '<script type="application/ld+json">\n' + JSON.stringify(o, null, 2) + '\n</script>'; }
+
+  function geoAudit() {
+    var out = [], n = geo.net, done = n.state === 'done', web = /^https?:$/.test(location.protocol);
+    var cur = { cat: 'Altro', w: 5 };
+    function chk(cat, w) { cur = { cat: cat, w: w }; }
+    // o = { label: nome del segnale, value: cosa c'è sulla pagina, code: testo pronto }
+    function add(sev, title, detail, els, p, o) {
+      o = o || {};
+      out.push({ sev: sev, title: title, detail: detail, els: (els || []).filter(Boolean), cat: cur.cat, w: o.pending ? 0 : cur.w, p: p != null ? clamp(p, 0, 1) : PTS[sev],
+        label: o.label || title, value: o.value || '', code: o.code || '', pending: !!o.pending });
+    }
+    function vis(el) { return !uxOurs(el) && visibleBox(el); }
+    function all(sel) { return [].filter.call(document.querySelectorAll(sel), vis); }
+    function txt(el) { return (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim(); }
+    function words(t) { return (String(t || '').match(/[a-zà-ÿ0-9]{2,}/gi) || []).length; }
+    function inContent(el) { return !el.closest('nav,footer,header,aside,[role=navigation],[role=contentinfo],[role=banner],form'); }
+    var pending = 'Sto controllando…', site = siteName(), main = document.querySelector('main,[role=main],article') || document.body;
+    var nodes = geoNodes(), types = [];
+    nodes.forEach(function (x) { [].concat(x['@type']).forEach(function (t) { if (types.indexOf(t) < 0) types.push(t); }); });
+    var heads = all('h1,h2,h3,h4').filter(inContent), h1 = heads.filter(function (h) { return h.tagName === 'H1'; })[0];
+    var paras = all('p').filter(function (p) { return inContent(p) && words(txt(p)) >= 8; });
+
+    // --- accesso dei bot AI ---
+    chk('Accesso AI', 15);
+    if (!web) add('tip', 'Bot delle risposte AI', 'Si controlla sulle pagine online.', [], 1, { label: 'Bot delle risposte AI (robots.txt)', value: 'pagina locale' });
+    else if (!done) add('tip', 'Bot delle risposte AI', '', [], 1, { label: 'Bot delle risposte AI (robots.txt)', value: pending, pending: true });
+    else if (n.robotsErr) add('tip', 'Bot delle risposte AI', 'Il sito non mi lascia leggere il robots.txt da qui: aprilo a mano (' + location.origin + '/robots.txt) e controlla che non blocchi OAI-SearchBot, PerplexityBot e Claude-SearchBot.', [], 0.7, { label: 'Bot delle risposte AI (robots.txt)', value: 'non verificabile' });
+    else {
+      var path = location.pathname + location.search, blocked = n.robots == null ? [] : GEO_SEARCH_BOTS.filter(function (b) { return robotsBlocks(n.robots, b, path); });
+      var okb = GEO_SEARCH_BOTS.filter(function (b) { return blocked.indexOf(b) < 0; });
+      var rcode = blocked.length ? blocked.map(function (b) { return 'User-agent: ' + b + '\nAllow: /'; }).join('\n\n') : '';
+      if (blocked.length) add(blocked.length >= 3 ? 'error' : 'warn', 'Il robots.txt blocca ' + (blocked.length === 1 ? 'un bot' : blocked.length + ' bot') + ' delle risposte AI', 'Chi è bloccato non può leggere la pagina, quindi non la cita: ' + blocked.join(', ') + '. Se vuoi comparire nelle risposte di ChatGPT, Perplexity, Claude e Copilot, aggiungi al robots.txt le righe qui sotto (prima delle regole generali).', [], okb.length / GEO_SEARCH_BOTS.length, { label: 'Bot delle risposte AI (robots.txt)', value: 'bloccati: ' + blocked.join(', '), code: rcode });
+      else add('ok', 'I bot delle risposte AI possono leggere la pagina', n.robots == null ? 'Non c\'è un robots.txt: nessun bot è bloccato.' : 'Il robots.txt non blocca ChatGPT, Perplexity, Claude, Copilot né Google.', [], null, { label: 'Bot delle risposte AI (robots.txt)', value: n.robots == null ? 'nessun robots.txt: tutti ammessi' : 'tutti ammessi' });
+    }
+    chk('Accesso AI', 2);
+    if (web && done && n.robots != null && !n.robotsErr) {
+      var tb = GEO_TRAIN_BOTS.filter(function (b) { return robotsBlocks(n.robots, b, location.pathname); });
+      add('ok', 'Bot di addestramento', tb.length ? 'È una scelta legittima: bloccarli evita che i testi finiscano negli addestramenti, ma non toglie la pagina dalle risposte con ricerca (ChatGPT search, Perplexity, AI Overviews).' : 'Possono usare i testi per addestrare i modelli. Se preferisci di no, puoi bloccarli senza perdere le citazioni nelle risposte.', [], null, { label: 'Bot di addestramento', value: tb.length ? 'bloccati: ' + tb.join(', ') : 'ammessi' });
+    }
+    var mr = ((document.querySelector('meta[name="robots" i]') || {}).content || '') + ',' + ((document.querySelector('meta[name="googlebot" i]') || {}).content || '');
+    chk('Accesso AI', 8);
+    if (/nosnippet|max-snippet\s*:\s*0\b/i.test(mr)) add('warn', 'La pagina vieta gli estratti (nosnippet)', 'Con nosnippet o max-snippet:0 Google non può usare il testo nei riassunti AI e nei risultati: toglilo, o limitalo solo alle parti riservate con data-nosnippet.', [], null, { label: 'Estratti per i riassunti AI', value: 'vietati (' + shortTxt(mr.replace(/^,|,$/g, ''), 40) + ')' });
+    else if (/noai|noimageai/i.test(mr)) add('tip', 'C\'è il tag noai', 'noai e noimageai non sono uno standard: quasi nessun motore li rispetta. Va bene lasciarli, ma non proteggono davvero i testi.', [], null, { label: 'Estratti per i riassunti AI', value: 'noai (non standard)' });
+    else add('ok', 'Gli estratti sono permessi', 'Nessun nosnippet: Google e gli altri possono citare il testo.', [], null, { label: 'Estratti per i riassunti AI', value: 'permessi' });
+    var liveWords = words(main.innerText || '');
+    chk('Accesso AI', 12);
+    if (!web) add('tip', 'Testo leggibile senza JavaScript', 'Si controlla sulle pagine online.', [], 1, { label: 'Testo senza JavaScript', value: 'pagina locale' });
+    else if (!done) add('tip', 'Testo leggibile senza JavaScript', '', [], 1, { label: 'Testo senza JavaScript', value: pending, pending: true });
+    else if (n.rawWords == null) add('tip', 'Testo leggibile senza JavaScript', 'Non sono riuscito a leggere l\'HTML della pagina (forse serve l\'accesso).', [], 0.7, { label: 'Testo senza JavaScript', value: 'non verificabile' });
+    else {
+      var ratio = liveWords ? Math.min(1, n.rawWords / liveWords) : 1, pc = Math.round(ratio * 100) + '% del testo è già nell\'HTML';
+      if (ratio < 0.3) add('error', 'Il testo arriva solo con JavaScript', 'Molti bot AI (GPTBot, PerplexityBot, ClaudeBot) non eseguono JavaScript: vedono una pagina quasi vuota. Fai generare il testo principale dal server (rendering lato server o pagine statiche).', [], ratio, { label: 'Testo senza JavaScript', value: pc });
+      else if (ratio < 0.7) add('warn', 'Parte del testo arriva solo con JavaScript', 'I bot che non eseguono JavaScript perdono una parte dei contenuti: metti nell\'HTML almeno i testi principali, le FAQ e i dati.', [], ratio, { label: 'Testo senza JavaScript', value: pc });
+      else add('ok', 'Il testo si legge anche senza JavaScript', 'Anche i bot più semplici vedono i contenuti.', [], null, { label: 'Testo senza JavaScript', value: pc });
+    }
+    chk('Accesso AI', 2);
+    if (web && done) {
+      var navL = all('nav a[href], header a[href]').filter(function (a) { return a.origin === location.origin && txt(a); }).slice(0, 6);
+      var h1e = heads.filter(function (h) { return h.tagName === 'H1'; })[0], leadP = h1e ? paras.filter(function (p) { return h1e.compareDocumentPosition(p) & 4; })[0] : paras[0];
+      var llmsCode = '# ' + site + '\n\n> ' + shortTxt(((document.querySelector('meta[name="description" i]') || {}).content || (leadP ? txt(leadP) : '')), 200) + '\n\n## Pagine principali\n' +
+        (navL.length ? navL.map(function (a) { return '- [' + shortTxt(txt(a), 40) + '](' + a.href.split('#')[0] + ')'; }).join('\n') : '- [' + shortTxt(document.title, 60) + '](' + location.href.split('#')[0] + ')');
+      if (n.llms) add('ok', 'C\'è il file llms.txt', 'Un indice dei contenuti pensato per i modelli linguistici.', [], null, { label: 'llms.txt', value: 'presente' });
+      else add('tip', 'Manca il file llms.txt', 'È facoltativo e ancora poco usato dai motori, ma costa poco: un file di testo nella radice del sito con chi sei e le pagine principali. Eccone una bozza da completare.', [], 0.5, { label: 'llms.txt', value: 'assente', code: llmsCode });
+    }
+
+    // --- risposte chiare ---
+    var lead = null;
+    if (h1) { lead = paras.filter(function (p) { return h1.compareDocumentPosition(p) & 4; })[0] || null; }
+    else lead = paras[0] || null;
+    var lw = lead ? words(txt(lead)) : 0;
+    chk('Risposte', 10);
+    if (!lead) add('warn', 'Manca un riassunto all\'inizio', 'Le AI citano volentieri il primo paragrafo se risponde subito: subito sotto il titolo scrivi 2-3 frasi con cosa offri, dove e per chi.', h1 ? [h1] : [], null, { label: 'Riassunto iniziale', value: 'nessun paragrafo dopo il titolo' });
+    else if (lw > 100) add('tip', 'Il primo paragrafo è lungo', 'Ha ' + lw + ' parole: le risposte AI prendono frasi brevi e autosufficienti. Apri con 2-3 frasi chiare (40-80 parole) e sposta i dettagli dopo.', [lead], 0.6, { label: 'Riassunto iniziale', value: lw + ' parole' });
+    else if (lw < 20) add('tip', 'Il primo paragrafo è molto corto', 'Ha solo ' + lw + ' parole: arricchiscilo con cosa, dove e per chi, così può essere citato da solo.', [lead], 0.7, { label: 'Riassunto iniziale', value: lw + ' parole' });
+    else add('ok', 'C\'è un riassunto chiaro all\'inizio', lw + ' parole subito sotto il titolo.', [lead], null, { label: 'Riassunto iniziale', value: lw + ' parole' });
+    var QRE = /\?\s*$|^(come|cosa|che cosa|quanto|quanti|quante|perché|perche|quando|dove|chi|quale|quali|si può|posso|serve|conviene|how|what|why|when|where|which|who|can|is|are|do|does)\b/i;
+    var sub = heads.filter(function (h) { return h.tagName !== 'H1'; }), qs = sub.filter(function (h) { return QRE.test(txt(h)); });
+    chk('Risposte', 8);
+    if (!sub.length) add('warn', 'Mancano i sottotitoli', 'Le AI cercano nella pagina la sezione che risponde alla domanda: dividi il testo con H2 e H3, meglio se scritti come domande.', [], 0.3, { label: 'Domande nei titoli', value: 'nessun sottotitolo' });
+    else if (!qs.length) add('tip', 'Nessun titolo scritto come domanda', 'Le persone chiedono alle AI «quanto costa…?», «dove si trova…?»: alcuni H2 scritti come domanda, con la risposta subito sotto, vengono ripresi più facilmente. Es. «' + shortTxt(txt(sub[0]), 40) + '» → «' + geoAsQuestion(txt(sub[0])) + '»', sub.slice(0, 3), 0.4, { label: 'Domande nei titoli', value: '0 su ' + sub.length });
+    else add(qs.length >= 2 ? 'ok' : 'tip', qs.length >= 2 ? 'Ci sono titoli scritti come domande' : 'Un solo titolo scritto come domanda', qs.length >= 2 ? 'Domande e risposte vicine sono il formato preferito dalle AI.' : 'Aggiungine qualcun altro sulle domande che fanno davvero i clienti (prezzi, tempi, zona, come funziona).', qs, qs.length >= 2 ? null : 0.7, { label: 'Domande nei titoli', value: qs.length + ' su ' + sub.length });
+    var faqEl = all('h2,h3,h4,summary,[class*="faq" i],[id*="faq" i]').filter(function (e) { return /faq|domande frequenti|domande e risposte/i.test(txt(e) + ' ' + (e.id || '') + ' ' + (e.className || '')); })[0] || null;
+    var details = all('details').filter(inContent), hasFaqLd = nodes.some(function (x) { return geoType(x, /FAQPage/i); });
+    var faqQ = qs.map(function (h) {
+      // la risposta: i paragrafi che vengono dopo la domanda, fino al titolo successivo (anche se sono in altri blocchi)
+      var nextH = heads[heads.indexOf(h) + 1];
+      var ans = paras.filter(function (p) { return (h.compareDocumentPosition(p) & 4) && (!nextH || (p.compareDocumentPosition(nextH) & 4)); }).slice(0, 2).map(txt);
+      return { q: txt(h), a: shortTxt(ans.join(' '), 400) };
+    }).concat(details.map(function (d) { var s = d.querySelector('summary'); return { q: s ? txt(s) : '', a: shortTxt(txt(d).replace(s ? txt(s) : '', ''), 400) }; })).filter(function (x) { return x.q && x.a; }).slice(0, 8);
+    var faqCode = geoJson({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: (faqQ.length ? faqQ : [{ q: '[Domanda frequente 1]', a: '[Risposta breve e completa]' }, { q: '[Domanda frequente 2]', a: '[Risposta breve e completa]' }]).map(function (x) { return { '@type': 'Question', name: x.q, acceptedAnswer: { '@type': 'Answer', text: x.a } }; }) });
+    chk('Risposte', 8);
+    if (!faqEl && !details.length && !hasFaqLd && faqQ.length < 2) add('tip', 'Non c\'è una sezione FAQ', 'Una piccola FAQ con le domande vere dei clienti (e il JSON-LD FAQPage) è il contenuto più citato dalle AI. Ecco lo schema da completare.', [], 0.3, { label: 'FAQ', value: 'assente', code: faqCode });
+    else if (!hasFaqLd) add('tip', 'La FAQ non ha i dati strutturati', 'Le domande ci sono: aggiungi il JSON-LD FAQPage qui sotto (l\'ho già riempito con le domande e le risposte della pagina, controllale).', faqEl ? [faqEl] : qs.slice(0, 2), 0.65, { label: 'FAQ', value: 'presente, senza schema', code: faqCode });
+    else add('ok', 'FAQ con dati strutturati', 'Domande e risposte sono anche nel JSON-LD FAQPage.', faqEl ? [faqEl] : [], null, { label: 'FAQ', value: 'presente con FAQPage' });
+    var lists = all('ul,ol,table').filter(function (e) { return inContent(e) && (e.tagName === 'TABLE' || e.querySelectorAll('li').length >= 3); });
+    chk('Risposte', 5);
+    if (!lists.length) add('tip', 'Nessun elenco o tabella', 'Caratteristiche, prezzi, tempi e confronti in elenco puntato o in tabella si estraggono e si citano molto meglio dei paragrafi.', [], 0.4, { label: 'Elenchi e tabelle', value: 'nessuno' });
+    else add('ok', 'Ci sono elenchi o tabelle', lists.length + ' blocchi strutturati nel contenuto.', lists.slice(0, 3), null, { label: 'Elenchi e tabelle', value: lists.length + ' blocchi' });
+    var NUM = /\b\d+(?:[.,]\d+)?°?\s?(?:m²|mq|m2|metri|km|€|euro|%|minuti|min|ore|anni|mesi|giorni|piani?|camere|locali|posti|appartamenti|unità)(?![a-zà-ÿ0-9])|€\s?\d|\b(?:19|20)\d{2}\b/gi;
+    var leafTxt = all('p,li,td,th,dd,dt,span,strong,b,em,small,figcaption,h1,h2,h3,h4,h5,h6,div').filter(function (e) { return inContent(e) && !e.children.length; }).map(txt).join(' · ');
+    var facts = leafTxt.match(NUM) || [];
+    chk('Risposte', 6);
+    if (!facts.length) add('warn', 'Pochi dati concreti', 'Le AI preferiscono citare fatti verificabili: metri quadri, prezzi, distanze, tempi, anni, percentuali. Mettili nel testo, non solo nelle immagini.', [], 0.3, { label: 'Dati concreti', value: 'nessun numero nel testo' });
+    else if (facts.length < 5) add('tip', 'Qualche dato concreto in più', (facts.length === 1 ? 'C\'è 1 numero o misura' : 'Ci sono ' + facts.length + ' numeri o misure') + ' nel testo (es. «' + facts[0] + '»): aggiungi superfici, prezzi, tempi e distanze dove servono.', [], 0.7, { label: 'Dati concreti', value: facts.length === 1 ? '1 numero o misura' : facts.length + ' numeri e misure' });
+    else add('ok', 'Tanti dati concreti', facts.length + ' numeri e misure nel testo, es. «' + facts.slice(0, 3).join('», «') + '».', [], null, { label: 'Dati concreti', value: facts.length + ' numeri e misure' });
+    var longP = paras.filter(function (p) { return words(txt(p)) > 120; });
+    chk('Risposte', 4);
+    if (longP.length) add('tip', 'Paragrafi troppo lunghi', longP.length + (longP.length === 1 ? ' paragrafo supera' : ' paragrafi superano') + ' le 120 parole: le AI citano blocchi brevi che stanno in piedi da soli. Dividili in paragrafi di 2-4 frasi.', longP, Math.max(0.3, 1 - longP.length / Math.max(1, paras.length)), { label: 'Paragrafi brevi', value: longP.length + ' oltre 120 parole' });
+    else if (paras.length) add('ok', 'Paragrafi brevi', 'Blocchi corti, facili da citare.', [], null, { label: 'Paragrafi brevi', value: 'tutti sotto 120 parole' });
+
+    // --- fiducia ---
+    var org = nodes.filter(function (x) { return geoType(x, /Organization|LocalBusiness|RealEstate|Corporation|Store|Person/i); })[0] || null;
+    var author = (document.querySelector('meta[name="author" i]') || {}).content || nodes.map(function (x) { var a = [].concat(x.author || x.publisher || [])[0]; return a && (typeof a === 'string' ? a : a.name || ''); }).filter(Boolean)[0] || '';
+    var about = all('a[href]').filter(function (a) { return /chi siamo|about|azienda|chi sono|la nostra storia/i.test(txt(a) + ' ' + a.href); })[0] || null;
+    var SOC_HOST = /(^|\.)(instagram|facebook|linkedin|youtube|tiktok|twitter|x|pinterest|threads)\.(com|net)$/i;
+    var social = all('a[href]').filter(function (a) { return SOC_HOST.test(a.hostname || ''); }).map(function (a) { return a.href.split('?')[0]; }).filter(function (h, i, arr) { return arr.indexOf(h) === i; }).slice(0, 6);
+    var logo = (all('header img, [class*="logo" i] img, img[class*="logo" i]')[0] || {}).src || (document.querySelector('meta[property="og:image"]') || {}).content || '';
+    var orgCode = geoJson({ '@context': 'https://schema.org', '@type': 'Organization', name: site, url: location.origin, logo: logo || '[URL del logo]', sameAs: social.length ? social : ['[URL profilo LinkedIn]', '[URL profilo Instagram]'] });
+    chk('Fiducia', 8);
+    if (!org && !author && !about) add('warn', 'Non si capisce chi parla', 'Le AI si fidano di fonti riconoscibili: indica l\'azienda o l\'autore (JSON-LD Organization, una pagina «Chi siamo» collegata).' + (nodes.length ? '' : ' Il codice è nella riga «Dati strutturati».'), [], 0.3, { label: 'Chi parla', value: 'nessuna indicazione', code: nodes.length ? orgCode : '' });
+    else add('ok', 'Si capisce chi parla', org ? 'C\'è il JSON-LD di ' + (org.name || [].concat(org['@type'])[0]) + '.' : author ? 'Autore: ' + author + '.' : 'C\'è il link a «' + shortTxt(txt(about), 30) + '».', about ? [about] : [], null, { label: 'Chi parla', value: org ? (org.name || [].concat(org['@type'])[0]) : author || shortTxt(txt(about), 30) });
+    var timeEl = document.querySelector('time[datetime]');
+    var dm = nodes.map(function (x) { return x.dateModified || x.datePublished; }).filter(Boolean)[0] || (document.querySelector('meta[property="article:modified_time"],meta[property="article:published_time"]') || {}).content || (timeEl ? timeEl.getAttribute('datetime') : '') || '';
+    var dd = dm ? new Date(dm) : null, ageY = dd && !isNaN(dd) ? (Date.now() - dd) / 31557600000 : null, today = new Date().toISOString().slice(0, 10);
+    chk('Fiducia', 6);
+    if (ageY == null) add('tip', 'Non c\'è la data di aggiornamento', 'Le AI preferiscono informazioni recenti: indica quando la pagina è stata aggiornata (dateModified nel JSON-LD o una data visibile).', [], 0.5, { label: 'Data di aggiornamento', value: 'assente', code: '"dateModified": "' + today + '"' });
+    else if (ageY > 2) add('tip', 'La pagina sembra vecchia', 'Ultimo aggiornamento indicato: ' + dd.toLocaleDateString('it-IT') + '. Se i contenuti sono cambiati, aggiornala e aggiorna la data.', [], 0.6, { label: 'Data di aggiornamento', value: dd.toLocaleDateString('it-IT') });
+    else add('ok', 'Pagina aggiornata', 'Ultimo aggiornamento indicato: ' + dd.toLocaleDateString('it-IT') + '.', [], null, { label: 'Data di aggiornamento', value: dd.toLocaleDateString('it-IT') });
+    var ext = all('a[href]').filter(function (a) { return inContent(a) && a.origin && a.origin !== location.origin && /^https?:/.test(a.href) && !SOC_HOST.test(a.hostname) && !/(^|\.)(whatsapp\.com|wa\.me|google\.[a-z.]+|goo\.gl)$/i.test(a.hostname); });
+    chk('Fiducia', 4);
+    if (!ext.length) add('tip', 'Nessuna fonte esterna citata', 'Citare dati ufficiali (Comune, ISTAT, enti di certificazione, studi) rende il contenuto più affidabile anche per le AI.', [], 0.5, { label: 'Fonti citate', value: 'nessuna' });
+    else add('ok', 'Ci sono fonti esterne', ext.length + ' link a siti esterni nel contenuto.', ext.slice(0, 3), null, { label: 'Fonti citate', value: ext.length + ' link esterni' });
+    var contact = all('a[href^="tel:"],a[href^="mailto:"],address')[0] || null, addrLd = nodes.some(function (x) { return x.address || x.telephone; });
+    chk('Fiducia', 4);
+    if (!contact && !addrLd) add('tip', 'Mancano contatti e sede', 'Telefono, email e indirizzo visibili (e nel JSON-LD) aiutano le AI a collegare la pagina a un\'azienda reale.', [], 0.5, { label: 'Contatti e sede', value: 'non trovati' });
+    else add('ok', 'Contatti presenti', contact ? 'Telefono, email o indirizzo sono sulla pagina.' : 'Indirizzo o telefono sono nel JSON-LD.', contact ? [contact] : [], null, { label: 'Contatti e sede', value: contact ? 'sulla pagina' : 'nel JSON-LD' });
+
+    // --- dati strutturati ---
+    chk('Dati strutturati', 10);
+    if (!nodes.length) add('warn', 'Nessun dato strutturato', 'Il JSON-LD dice alle AI chi sei e di cosa parla la pagina senza doverlo indovinare. Parti da Organization (qui sotto, già con nome, sito, logo e social trovati) e aggiungi i tipi adatti alla pagina.', [], 0.2, { label: 'Dati strutturati', value: 'nessuno', code: orgCode });
+    else add('ok', 'Dati strutturati presenti', types.slice(0, 6).join(', ') + '.', [], null, { label: 'Dati strutturati', value: types.slice(0, 4).join(', ') });
+    chk('Dati strutturati', 6);
+    if (!org) { if (nodes.length) add('tip', 'Manca l\'azienda nei dati strutturati', 'Aggiungi Organization (o LocalBusiness) con il nome, il logo e i profili social in sameAs: così le AI collegano il sito alla tua azienda.', [], 0.4, { label: 'Azienda riconoscibile', value: 'nessuna Organization', code: orgCode }); }
+    else if (!org.sameAs || ![].concat(org.sameAs).length) add('tip', 'L\'azienda non ha i profili collegati', 'Aggiungi sameAs con i profili ufficiali (LinkedIn, Instagram, Wikipedia se c\'è): aiuta le AI a capire che è sempre la stessa azienda.', [], 0.6, { label: 'Azienda riconoscibile', value: (org.name || 'Organization') + ' senza sameAs', code: '"sameAs": ' + JSON.stringify(social.length ? social : ['[URL profilo LinkedIn]']) });
+    else add('ok', 'Azienda riconoscibile', (org.name || 'Organization') + ' con ' + [].concat(org.sameAs).length + ' profili collegati.', [], null, { label: 'Azienda riconoscibile', value: (org.name || 'Organization') + ' + sameAs' });
+    var crumbs = all('nav[aria-label*="bread" i], [class*="breadcrumb" i]')[0] || null, hasCrumbLd = nodes.some(function (x) { return geoType(x, /BreadcrumbList/i); });
+    chk('Dati strutturati', 4);
+    if (crumbs && !hasCrumbLd) add('tip', 'Briciole di pane senza schema', 'Il percorso (Home › Sezione › Pagina) c\'è ma non è nel JSON-LD BreadcrumbList: aggiungilo per far capire la posizione della pagina nel sito.', [crumbs], 0.6, { label: 'Percorso nel sito', value: 'visibile, senza schema' });
+    else if (hasCrumbLd) add('ok', 'Percorso nel sito descritto', 'C\'è il BreadcrumbList.', [], null, { label: 'Percorso nel sito', value: 'BreadcrumbList' });
+
+    var order = { error: 0, warn: 1, tip: 2, ok: 3 };
+    out.sort(function (a, b) { return order[a.sev] - order[b.sev]; });
+    geo.list = out;
+    return out;
+  }
+  // un titolo trasformato in domanda, come esempio (non sostituisce il lavoro di chi scrive)
+  function geoAsQuestion(t) {
+    t = t.replace(/[.:!]+$/, '').trim();
+    if (/^(le |i |gli |la |il |lo |l')/i.test(t)) return 'Quali sono ' + t.charAt(0).toLowerCase() + t.slice(1) + '?';
+    if (/prezz|cost/i.test(t)) return 'Quanto costa…?';
+    if (/dove|zona|posizion|quartier/i.test(t)) return 'Dove si trova…?';
+    return 'Cosa sapere su ' + t.charAt(0).toLowerCase() + t.slice(1) + '?';
+  }
+  function geoScore() { return scoreOf(geo.list); }
+  function geoSay() {
+    var sc = geoScore(), weak = catScores('geo').sort(function (a, b) { return a.sc - b.sc; })[0];
+    var top = (geo.list || []).filter(function (f) { return f.sev !== 'ok' && !f.pending; }).sort(function (a, b) { return geoGain(b) - geoGain(a); })[0];
+    say('GEO, cioè quanto le AI ti trovano e ti citano: ' + sc + '/100' + (weak && weak.sc < 80 ? '. Il punto più debole è «' + weak.name + '» (' + weak.sc + ')' : '') +
+      (top ? '. Primo consiglio: ' + top.title.charAt(0).toLowerCase() + top.title.slice(1) + '. Trovi tutto nella tabella, con i testi pronti.' : '. Messa bene! 🤖'));
+  }
+  function geoGain(f) { return Math.round((f.w || 0) * (1 - (f.p != null ? f.p : PTS[f.sev]))); }
+  // la tabella: un segnale per riga, cosa c'è sulla pagina, come migliorarlo, testo pronto da copiare
+  function geoTableHtml(L) {
+    var sel = (ux.cat || {}).geo, rows = (sel ? L.filter(function (f) { return f.cat === sel; }) : L).slice();
+    rows.sort(function (a, b) { return (b.pending ? -1 : 0) - (a.pending ? -1 : 0) || geoGain(b) - geoGain(a) || (a.sev === 'ok') - (b.sev === 'ok'); });
+    var html = '<h4>Tabella GEO: segnale per segnale</h4><p class="sub">Dai segnali che fanno guadagnare più punti. Clicca il testo pronto per copiarlo.</p>' +
+      '<table class="geo"><thead><tr><th scope="col">Segnale</th><th scope="col">Sulla pagina</th></tr></thead><tbody>';
+    rows.forEach(function (f) {
+      var i = L.indexOf(f), col = f.pending ? '#8a9bc0' : SEV[f.sev].c, g = geoGain(f);
+      html += '<tr class="sg-' + f.sev + '"><th scope="row"><button type="button" class="gz" data-z="' + i + '">' + esc(f.label) + (f.els.length ? ' ↗' : '') + '</button></th>' +
+        '<td><span class="dot" style="background:' + col + '"></span>' + esc(f.value || '—') + (g > 0 ? ' <em class="gain">+' + g + '</em>' : '') + '</td></tr>';
+      if (f.sev !== 'ok' && (f.detail || f.code)) html += '<tr class="how"><td colspan="2">' + esc(f.detail) +
+        (f.code ? '<button type="button" class="gcode" data-gc="' + i + '" title="Clicca per copiare"><pre>' + esc(f.code) + '</pre><span>📋 Copia</span></button>' : '') + '</td></tr>';
+    });
+    return html + '</tbody></table>';
+  }
+
   // pannello del report
   var uxPanel = mk('div');
   uxPanel.id = '__nimblu_ux';
@@ -5918,7 +6183,7 @@ window.__MASCOT_SRC = function (opts) {
     '#__nimblu_ux .n{width:20px;height:20px;border-radius:50%;background:#6a4fb3;color:#fff;font:700 11px/20px system-ui,sans-serif;text-align:center}' +
     '#__nimblu_ux .ai button{grid-template-columns:20px 1fr}' +
     '#__nimblu_ux .how{grid-column:2;font:600 12px/1.4 system-ui,sans-serif;color:#22314f}' +
-    '#__nimblu_ux .tabs{display:grid;grid-template-columns:.8fr .9fr 1.3fr;gap:4px;padding:3px;background:#e2eaf7;border-radius:11px;margin:4px 0 8px}' +
+    '#__nimblu_ux .tabs{display:grid;grid-template-columns:auto auto auto 1fr;gap:4px;padding:3px;background:#e2eaf7;border-radius:11px;margin:4px 0 8px}' +
     '#__nimblu_ux .tabs button{display:flex;align-items:center;justify-content:center;gap:6px;grid-template-columns:none;padding:6px 4px;border:0;background:transparent;font:700 12px/1.2 system-ui,-apple-system,sans-serif;color:#22314f}' +
     '#__nimblu_ux .tabs button[aria-pressed=true]{background:#fff;box-shadow:0 1px 3px rgba(30,45,80,.15)}' +
     '#__nimblu_ux .tabs .score{padding:3px 6px;font-size:11px}' +
@@ -5953,6 +6218,20 @@ window.__MASCOT_SRC = function (opts) {
     '#__nimblu_ux details{margin:10px 0 0}' +
     '#__nimblu_ux summary{cursor:pointer;margin:0 0 4px;font:700 11px/1.3 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:#2f9e6a}' +
     '#__nimblu_ux .tabs button{padding:6px 3px;gap:4px;white-space:nowrap}' +
+    '#__nimblu_ux table.geo{width:100%;border-collapse:separate;border-spacing:0;margin:0 0 8px;font:500 12px/1.4 system-ui,-apple-system,sans-serif;background:#fff;border:1px solid #dbe4f3;border-radius:10px;overflow:hidden}' +
+    '#__nimblu_ux table.geo th,#__nimblu_ux table.geo td{padding:6px 8px;text-align:left;vertical-align:top;border-top:1px solid #e8eef8}' +
+    '#__nimblu_ux table.geo thead th{border-top:0;background:#e8eef9;font:700 10.5px/1.3 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#4a5d82}' +
+    '#__nimblu_ux table.geo tbody th{width:44%;font-weight:600}' +
+    '#__nimblu_ux table.geo td{color:#22314f}' +
+    '#__nimblu_ux table.geo .dot{display:inline-block;width:8px;height:8px;margin:0 6px 1px 0;vertical-align:middle}' +
+    '#__nimblu_ux table.geo tr.how td{border-top:0;padding:0 8px 8px;color:#4a5d82;font-size:11.5px;background:#fbfcfe}' +
+    '#__nimblu_ux table.geo tr.how{background:#fbfcfe}' +
+    '#__nimblu_ux .gz{all:unset;cursor:pointer;color:#22314f;font:600 12px/1.35 system-ui,sans-serif}' +
+    '#__nimblu_ux .gz:hover{color:#4f74b3}' +
+    '#__nimblu_ux table.geo .gain{font-style:normal;font:800 10.5px/1 system-ui,sans-serif;color:#1f7a4c;background:#e3f4ea;border-radius:5px;padding:1px 4px;margin-left:4px}' +
+    '#__nimblu_ux .gcode{display:block;margin-top:6px;padding:6px 8px;background:#f2f6fc;border:1px dashed #b9c8e4;grid-template-columns:none}' +
+    '#__nimblu_ux .gcode pre{margin:0;max-height:120px;overflow:auto;white-space:pre-wrap;word-break:break-word;font:600 10.5px/1.4 ui-monospace,Menlo,monospace;color:#1f6b45}' +
+    '#__nimblu_ux .gcode span{display:block;margin-top:4px;font:700 11px/1 system-ui,sans-serif;color:#4f74b3}' +
     '#__nimblu_ux .adv{list-style:none;margin:0;padding:0;display:grid;gap:6px}' +
     '#__nimblu_ux .ad{background:#fff;border:1px solid #dbe4f3;border-radius:10px;padding:1px 1px 8px}' +
     '#__nimblu_ux .ad>button{border:0;background:transparent}' +
@@ -5984,11 +6263,20 @@ window.__MASCOT_SRC = function (opts) {
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function scoreBadge(sc) { return '<span class="score" style="background:' + (sc >= 80 ? '#2f9e6a' : sc >= 55 ? '#e08a1e' : '#d64545') + '">' + sc + '</span>'; }
   function renderUx() {
-    var tab = ux.tab === 'seo' || ux.tab === 'a11y' ? ux.tab : 'ux';
+    var tab = curTab();
     var html = '<div class="hd"><b>🔍 Controllo della pagina</b><button type="button" class="x" data-ux="close" aria-label="Chiudi">✕</button></div>' +
       '<div class="tabs"><button type="button" data-tab="ux" aria-pressed="' + (tab === 'ux') + '" title="Usabilità e conversione">UX ' + scoreBadge(uxScore()) + '</button>' +
       '<button type="button" data-tab="seo" aria-pressed="' + (tab === 'seo') + '">SEO ' + scoreBadge(seoScore()) + '</button>' +
+      '<button type="button" data-tab="geo" aria-pressed="' + (tab === 'geo') + '" title="GEO: farsi trovare e citare da ChatGPT, Perplexity, Gemini e dai riassunti AI di Google">GEO ' + scoreBadge(geoScore()) + '</button>' +
       '<button type="button" data-tab="a11y" aria-pressed="' + (tab === 'a11y') + '" title="Per chi è cieco o ipovedente e usa lo screen reader">Non vedenti ' + scoreBadge(a11yScore()) + '</button></div>';
+    if (tab === 'geo') {
+      html += '<p class="sub"><b>GEO</b> (Generative Engine Optimization): quanto è facile per ChatGPT, Perplexity, Gemini e i riassunti AI di Google leggere la pagina, capirla e citarla.</p>' +
+        (opts.ai && opts.aiPage !== false ? '<button type="button" class="ask" data-ux="ask">✨ Chiedi all\'AI come farti citare dalle AI</button>' : '') +
+        catsHtml(tab, geo.list || []) + geoTableHtml(geo.list || []) +
+        '<button type="button" class="re" data-ux="again">↻ Controlla di nuovo</button>';
+      uxPanel.innerHTML = html;
+      return;
+    }
     if (tab === 'a11y') {
       html += '<p class="sub">Chi è cieco o ipovedente usa lo <b>screen reader</b>, che gli legge la pagina: per lui conta solo quello che è scritto, anche dove non si vede. Ecco cosa cambiare.</p>' +
         (opts.ai && opts.aiPage !== false ? '<button type="button" class="ask" data-ux="ask">✨ Chiedi all\'AI altri consigli per chi non vede</button>' : '') +
@@ -6046,15 +6334,19 @@ window.__MASCOT_SRC = function (opts) {
   }
   function openUx(silent, tab) {
     if (tab) ux.tab = tab;
-    audit(); seoAudit(); a11yAudit(); renderUx();
+    audit(); seoAudit(); a11yAudit(); geoAudit(); geoFetch(); renderUx();
     uxPanel.style.display = 'block';
     var left = M.x - scrollX > W / 2;
     uxPanel.style.left = left ? '16px' : 'auto';
     uxPanel.style.right = left ? 'auto' : '16px';
     closeMenu();
     if (silent) return;
-    var tk = ux.tab === 'seo' || ux.tab === 'a11y' ? ux.tab : 'ux', isSeo = tk === 'seo', sc = scoreOf(tabList(tk)), weak = catScores(tk).sort(function (a, b) { return a.sc - b.sc; })[0];
-    if (tk === 'a11y') {
+    var tk = curTab(), isSeo = tk === 'seo', sc = scoreOf(tabList(tk)), weak = catScores(tk).sort(function (a, b) { return a.sc - b.sc; })[0];
+    if (tk === 'geo') {
+      if (geo.net.state === 'loading') { geo.sayAfter = true; say('Guardo la pagina con gli occhi delle AI... 🤖'); }
+      else geoSay();
+    }
+    else if (tk === 'a11y') {
       var top = (a11y.list || []).filter(function (f) { return f.sev !== 'ok'; }).sort(function (a, b) { return a11yGain(b) - a11yGain(a); })[0];
       say('Per chi non vede: ' + sc + '/100. ' + (top ? 'Primo consiglio: ' + top.title.charAt(0).toLowerCase() + top.title.slice(1) + (top.sug && top.sug[0] ? ', per esempio ' + top.sug[0] : top.code ? ': ' + top.code : '') + '. Gli altri sono nel pannello, con i testi pronti.' : 'Si usa bene anche senza vederla! ♿'));
     }
@@ -6088,13 +6380,18 @@ window.__MASCOT_SRC = function (opts) {
     e.preventDefault(); e.stopPropagation();
     var a = b.getAttribute('data-ux');
     if (a === 'close') { closeUx(); return; }
-    if (a === 'again') { audit(); seoAudit(); a11yAudit(); renderUx(); say('Ricontrollato!'); return; }
+    if (a === 'again') { audit(); seoAudit(); a11yAudit(); geoFetch(true); geoAudit(); renderUx(); say('Ricontrollato!'); return; }
     var tb = b.getAttribute('data-tab');
     if (tb) { ux.tab = tb; renderUx(); return; }
     var ct = b.getAttribute('data-cat');
-    if (ct != null) { var tk = ux.tab === 'seo' || ux.tab === 'a11y' ? ux.tab : 'ux'; ux.cat = ux.cat || {}; ux.cat[tk] = ct && ux.cat[tk] !== ct ? ct : null; renderUx(); return; }
+    if (ct != null) { var tk = curTab(); ux.cat = ux.cat || {}; ux.cat[tk] = ct && ux.cat[tk] !== ct ? ct : null; renderUx(); return; }
     var si = b.getAttribute('data-s');
     if (si != null && seo.list) { pointAt(seo.list[+si]); return; }
+    // GEO: riga della tabella (porta all'elemento o spiega) e testo pronto da copiare
+    var zi = b.getAttribute('data-z');
+    if (zi != null && geo.list && geo.list[+zi]) { var zf = geo.list[+zi]; if (zf.els.length) pointAt(zf); else say(zf.label + ': ' + (zf.value || '') + (zf.sev !== 'ok' && zf.detail ? '. ' + zf.detail : '')); return; }
+    var gci = b.getAttribute('data-gc');
+    if (gci != null && geo.list && geo.list[+gci] && geo.list[+gci].code) { var gf2 = geo.list[+gci]; say(gf2.label + ': ecco il testo pronto da incollare.'); copyText(gf2.code); return; }
     var yi = b.getAttribute('data-y');
     if (yi != null && a11y.list) { pointAt(a11y.list[+yi]); return; }
     // esempio pronto: porta sull'elemento e copia il testo
@@ -6115,6 +6412,7 @@ window.__MASCOT_SRC = function (opts) {
     }
     var hi = b.getAttribute('data-h');
     if (hi != null && seo.info && seo.info.outline[+hi]) { var oh = seo.info.outline[+hi]; pointAt({ title: 'H' + oh.lv, detail: '«' + shortTxt(oh.t, 80) + '»' + (oh.skip ? ' — salta un livello rispetto al titolo prima' : ''), els: [oh.el], sev: oh.skip ? 'warn' : 'tip' }); return; }
+    if (a === 'ask' && ux.tab === 'geo') { sendChat('Come posso far trovare e citare questa pagina da ChatGPT, Perplexity, Gemini e dai riassunti AI di Google (GEO)? Dammi consigli pratici su contenuti, FAQ e dati strutturati.', true); return; }
     if (a === 'ask' && ux.tab === 'a11y') { sendChat('Come posso rendere questa pagina più facile da usare per chi non vede e usa lo screen reader? Dammi consigli pratici, con i testi da scrivere.', true); return; }
     if (a === 'ask' && ux.tab === 'seo') { sendChat('Come posso migliorare la SEO di questa pagina? Guarda titolo, meta description, H1, H2, H3, testi, parole chiave e immagini.', true); return; }
     if (a === 'ask') { sendChat(ux.ai ? 'Dammi altri consigli per migliorare questa pagina, diversi da quelli di prima.' : 'Quali sono le cose più importanti da migliorare in questa pagina per farla convertire di più?', true); return; }
