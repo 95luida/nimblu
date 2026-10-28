@@ -2,7 +2,7 @@
 
 # Nimblu
 
-**Un’estensione per Chrome che controlla UX, SEO, GEO e AEO (le risposte delle AI e dei motori di risposta) e accessibilità di qualsiasi pagina web. E intanto ci vive sopra.**
+**Un’estensione per Chrome che controlla UX, SEO, GEO e AEO (le risposte delle AI e dei motori di risposta) e accessibilità di qualsiasi pagina web, anche come si vede da telefono. E intanto ci vive sopra.**
 
 Nimblu è una mascotte (un axolotl) che cammina sulle pagine che visiti. Quando glielo chiedi, controlla la pagina e ti dice cosa migliorare: ogni problema ha un voto, una spiegazione e un clic che ti porta dritto all’elemento da sistemare. Nelle pause gioca: fa a botte con l’omino del jetpack, corre come i gatti, insegue la pallina e mangia le lettere (poi le ridà).
 
@@ -14,7 +14,7 @@ Nimblu è una mascotte (un axolotl) che cammina sulle pagine che visiti. Quando 
 
 ## Il controllo della pagina
 
-Clicca Nimblu → **🔍 Controlla la pagina**. Si apre un pannello con cinque schede (UX, SEO, GEO, AEO e Non vedenti), ognuna con il suo voto da 0 a 100 e le barre per categoria. Le regole sono più di 100, fisse, e girano tutte nel browser (la scheda GEO legge anche `robots.txt` e `llms.txt` del sito).
+Clicca Nimblu → **🔍 Controlla la pagina**. Si apre un pannello con cinque schede (UX, SEO, GEO, AEO e Non vedenti), ognuna con il suo voto da 0 a 100 e le barre per categoria. In cima scegli se controllare la pagina com’è sul **🖥 computer** o sul **📱 telefono**. Le regole sono più di 100, fisse, e girano tutte nel browser (la scheda GEO legge anche `robots.txt` e `llms.txt` del sito).
 
 | UX e conversione | SEO | Non vedenti |
 |---|---|---|
@@ -69,6 +69,18 @@ Cliccando un esempio, la pagina scorre fino all’elemento, Nimblu ci salta sopr
 
 <p align="center"><img src="docs/img/esempio-copiato.png" width="520" alt="L’icona di Instagram evidenziata e Nimblu che dice: Prova così aria-label Instagram. Copiato!"></p>
 
+**Da telefono** (dal menu di Nimblu **📱 Controlla come si vede da telefono**, oppure *Telefono* in cima al pannello)
+
+Nimblu scarica la stessa pagina e la apre in una cornice larga 390 px, come un iPhone: il sito mostra il suo layout mobile e i controlli di tutte e cinque le schede girano lì, con le misure del telefono (cosa si vede nella prima schermata, scroll laterale, bottoni da toccare). La cornice resta accanto al pannello come anteprima: cliccando un problema scorre fin lì e lo evidenzia. In più c’è la categoria *Telefono*:
+- campi del form con il testo sotto i 16 px, che su iPhone fanno zoomare la pagina;
+- email e telefono in campi di testo normali, che aprono la tastiera sbagliata;
+- header, banner e barre fisse che coprono più di un quarto dello schermo;
+- numero di telefono scritto ma non cliccabile (manca il link `tel:`).
+
+La copia è aperta senza JavaScript: non conta visite in più in Analytics o Clarity, ma non vede neanche quello che fa solo il JavaScript (menu, slider, banner dei cookie); se manca troppo testo Nimblu lo dice. La velocità (LCP e CLS) si misura solo nella vista computer.
+
+<p align="center"><img src="docs/img/pannello-telefono.png" width="520" alt="Pannello in vista Telefono con la categoria Telefono a 84 e, accanto, l’anteprima della pagina larga 390 px con il campo Nome e cognome evidenziato"></p>
+
 ### Come nasce il voto
 
 Ogni controllo vale dei punti in base a quanto pesa (la meta description 12, un noindex 25). Se è a posto li prende tutti; altrimenti una parte: *consiglio* 70%, *da migliorare* 35%, *da sistemare* 0%.
@@ -116,7 +128,7 @@ Fa a botte con l’omino del jetpack (lo puoi comandare tu col mouse: pugni, pis
 ## Come è fatto
 
 ```
-mascot.js            tutto Nimblu: disegno su canvas, movimento, chat, controlli UX / SEO / non vedenti
+mascot.js            tutto Nimblu: disegno su canvas, movimento, chat, controlli UX / SEO / GEO / AEO / non vedenti, vista telefono
 estensione-nimblu/   estensione Chrome (Manifest V3): content script, popup, service worker, offscreen per l’AI
 nimblu-app/          versione «animaletto da tasca» per il telefono (PWA)
 demo/                pagina demo con errori lasciati apposta
@@ -125,7 +137,7 @@ stickman.js          l’omino distruttore da solo, come segnalibro
 docs/                presentazione in PDF e immagini
 ```
 
-Un solo file, `mascot.js` (circa 6.400 righe di JavaScript, nessuna dipendenza), usato da estensione, demo e segnalibro. I controlli sono tre funzioni (`audit`, `seoAudit`, `a11yAudit`) con lo stesso schema: ogni controllo dichiara categoria e peso, poi aggiunge un risultato con il suo punteggio.
+Un solo file, `mascot.js` (circa 7.000 righe di JavaScript, nessuna dipendenza), usato da estensione, demo e segnalibro. I controlli sono cinque funzioni (`audit`, `seoAudit`, `geoAudit`, `aeoAudit`, `a11yAudit`) con lo stesso schema: ogni controllo dichiara categoria e peso, poi aggiunge un risultato con il suo punteggio. Per la vista telefono le stesse funzioni girano sul documento della cornice: `inMode()` punta per un attimo `document` e le misure dello schermo sulla copia larga 390 px.
 
 Se modifichi `mascot.js`, copialo anche in `estensione-nimblu/` e `nimblu-app/`.
 

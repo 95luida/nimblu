@@ -10,6 +10,8 @@
 // opts.talk / opts.uxAuto / opts.onPrefs: chiacchiere e consigli automatici accesi o spenti, e callback per salvarli.
 // opts.ai(payload) → Promise<{reply, action}>: risposte generate da un modello (estensione); opts.aiPage: può leggere la pagina.
 window.__MASCOT_SRC = function (opts) {
+  // «document» locale: nella vista telefono i controlli lo puntano per un attimo sulla copia della pagina larga 390 px
+  var document = window.document;
   opts = opts || {};
   if (window.__mascot) { if (!opts.persistent) window.__mascot.stop(); return; }
   if (!document.body) return;
@@ -126,6 +128,8 @@ window.__MASCOT_SRC = function (opts) {
     '#__nimblu .bye{display:block;background:transparent;border:1.5px solid #c9d6ee}' +
     '#__nimblu .uxb{display:block;width:100%;margin:0 0 8px;background:#4f74b3;color:#fff}' +
     '#__nimblu .uxb:hover{background:#3d5f99}' +
+    '#__nimblu .uxr{display:grid;gap:5px;margin:0 0 8px}#__nimblu .uxr .uxb{margin:0}' +
+    '#__nimblu .uxr .uxm{background:#2d3e63}#__nimblu .uxr .uxm:hover{background:#1f2c48}' +
     '#__nimblu .fightb{background:#fde4e4;color:#8a1c24}' +
     '#__nimblu .fightb:hover{background:#f9cfcf}';
   var menu = mk('div');
@@ -151,7 +155,7 @@ window.__MASCOT_SRC = function (opts) {
     '<button type="button" data-a="hide">🙈 Nasconditi</button><button type="button" data-a="peek">👀 Sbircia</button><button type="button" data-a="climb">🧗 Arrampica</button>' +
     '<button type="button" data-a="zoom" title="Corsa pazza, come i gatti">🏃 Corri!</button><button type="button" data-a="ball" title="Una pallina da lanciargli">🎾 Pallina</button><button type="button" class="fightb" data-a="fight" title="Fai entrare l\'omino del jetpack">🥊 Omino</button>' +
     '</div>' +
-    '<button type="button" class="uxb" data-a="ux">🔍 Controlla la pagina: UX, SEO, GEO, AEO e non vedenti</button>' +
+    '<div class="uxr"><button type="button" class="uxb" data-a="ux">🔍 Controlla la pagina: UX, SEO, GEO, AEO e non vedenti</button><button type="button" class="uxb uxm" data-a="uxmob" title="Gli stessi controlli sulla pagina larga 390 px, come su un iPhone">📱 Controlla come si vede da telefono</button></div>' +
     '<form><input type="text" maxlength="200" placeholder="Scrivi a Nimblu…" aria-label="Messaggio per Nimblu"><button type="submit">Invia</button><button type="button" class="hist" data-a="hist" title="Cronologia della chat" aria-label="Cronologia della chat">🕘</button></form>' +
     '<div class="row"><button type="button" class="bye" data-a="spit">↩️ Ridai le lettere</button><button type="button" class="bye" data-a="bye">👋 ' + (opts.persistent ? 'Nascondi' : 'Chiudi') + '</button></div>';
   var bubble = mk('div');
@@ -3623,6 +3627,7 @@ window.__MASCOT_SRC = function (opts) {
     else if (a === 'dance') { wake(); dance(); say('♪ Blub blub ♪'); }
     else if (a === 'sniffUp') { wake(); M.plan = []; sniffUp(); }
     else if (a === 'ux') { wake(); openUx(); }
+    else if (a === 'uxmob') { wake(); openUx(false, null, true); }
     else if (a === 'front') { wake(); M.plan = []; front(0); }
     else if (a === 'follow') { wake(); M.follow = 600; M.plan = []; say('Ti seguo! Muovi il mouse 👀'); idle(5); }
     else if (a === 'sleep') sleep();
@@ -3649,7 +3654,7 @@ window.__MASCOT_SRC = function (opts) {
     // durante la rissa: "basta" o le mosse di Nimblu
     if (F) { var fr = fightChat(q); if (fr) { say(fr); logMsg('nimblu', fr); return; } }
     // comandi che devono funzionare sempre, anche senza AI
-    if (opts.ai && !FIGHT_Q.test(q) && !/pallina|\bpalla\b|lanciamela|corri\b|corsa pazza|zoomies|scatenat|zitto|silenzio|basta parlare|non parlare|^parla|chiacchier|ridai|restituisci|sputa|non mangiare|smetti di mangiare|torna a mangiare|puoi mangiare|barra|cronologia|non vedent|ciech|cieco|ipovedent|screen ?reader|\bgeo\b|\baeo\b|llms\.txt/i.test(q)) { askAi(q, force); return; }
+    if (opts.ai && !FIGHT_Q.test(q) && !/pallina|\bpalla\b|lanciamela|corri\b|corsa pazza|zoomies|scatenat|zitto|silenzio|basta parlare|non parlare|^parla|chiacchier|ridai|restituisci|sputa|non mangiare|smetti di mangiare|torna a mangiare|puoi mangiare|barra|cronologia|non vedent|ciech|cieco|ipovedent|screen ?reader|\bgeo\b|\baeo\b|llms\.txt/i.test(q) && !MOB_Q.test(q)) { askAi(q, force); return; }
     say('...');
     M.reply = { q: q, t: 30 };
   }
@@ -3663,6 +3668,7 @@ window.__MASCOT_SRC = function (opts) {
     mangia: function () { M.plan = []; planEat(); }, angolo: function () { setLevel('angolo', true); if (opts.onLevel) opts.onLevel('angolo'); else { try { localStorage.setItem('__nimblu_level', 'angolo'); } catch (e) {} } M.plan = []; idle(10); }, controlla: function () { openUx(); }
   };
   // domande sulla pagina (e quelle che seguono entro 3 minuti): l'AI riceve una scheda completa e risponde con consigli
+  var MOB_Q = /\b(da|dal|su|sul|per|in|col|con) (un |il |lo |uno )?(telefono|smartphone|cellulare|iphone)\b|\b(versione|vista|analisi|controllo|layout) (mobile|da telefono)\b|\bmobile\b.{0,20}(analisi|controll|vista)/;
   var PAGE_Q = /pagina|sito|meta ?description|parole chiave|keyword|indicizz|posizionament|google|h1|h2|\bux\b|conversion|design|landing|cosa ne pensi|miglior|problem|error|bottone|pulsante|testo|titolo|leggi|consigl|\bcta\b|call to action|seo|form\b|modulo|mobile|cellulare|veloc|lent|color|contrast|immagin|foto|clienti|vend|contatt|header|menu|footer|layout|sezion|funnel|prezz|offert|accessibil|non vedent|screen ?reader|\balt\b|\bgeo\b|\baeo\b|chatgpt|perplexity|gemini|ai overview|\bllm|snippet|assistent[ei] vocal|ricerca vocale/i;
   // seguiti di una domanda sulla pagina ("e il secondo?", "come lo faccio?"), ma non le chiacchiere
   var FOLLOW_Q = /\b(come|perch|qual|primo|prima|second|terz|quart|quint|quell|quest|spiega|esempi|altr|ancora|di più|meglio|dove|fallo|scrivi|riscriv|proponi|suggerisci|e se)/i;
@@ -3677,7 +3683,8 @@ window.__MASCOT_SRC = function (opts) {
       text: shortTxt(document.body.innerText, 900)
     };
   }
-  function pageBrief() {
+  function pageBrief() { return inMode(pageBrief0); }
+  function pageBrief0() {
     if (opts.aiPage === false) return null;
     audit();
     function vis(el) { return !uxOurs(el) && visibleBox(el); }
@@ -3698,7 +3705,7 @@ window.__MASCOT_SRC = function (opts) {
       imgs.length + ' immagini (' + imgs.filter(function (im) { return !im.hasAttribute('alt'); }).length + ' senza alt)',
       'telefono o email cliccabili: ' + (document.querySelector('a[href^="tel:"],a[href^="mailto:"]') ? 'sì' : 'no'),
       'recensioni o garanzie: ' + (TRUST_RE.test(body) ? 'sì' : 'no'),
-      'schermo largo ' + W + ' px (' + (W < 700 ? 'telefono' : 'computer') + ')',
+      'schermo largo ' + AV.w + ' px (' + (AV.w < 700 ? 'telefono' : 'computer') + ')',
       ux.lcp ? 'contenuto principale in ' + (ux.lcp / 1000).toFixed(1) + ' s' : '',
       'stabilità CLS ' + ux.cls.toFixed(2)
     ].filter(Boolean).join(', ');
@@ -3790,6 +3797,7 @@ window.__MASCOT_SRC = function (opts) {
         if (!B) { later(spawnBall, 200); return 'Una pallina! 🎾 Prendila e lanciamela!'; }
         later(startBallChase, 300); return B.held === 'nimblu' ? 'Ce l\'ho io! 😸' : 'Vado a prenderla! 🎾';
       }],
+      [MOB_Q, function () { later(function () { openUx(false, null, true); }, 400); return 'Guardo la pagina come su un telefono... 📱'; }],
       [/\baeo\b|answer engine|featured snippet|snippet in evidenza|risposta in evidenza|riquadr[io] in evidenza|assistent[ei] vocal|ricerca vocale|ricerche vocali|alexa|siri|google assistant|le persone chiedono anche|people also ask/, function () { later(function () { openUx(false, 'aeo'); }, 400); return 'Vediamo se la pagina sa rispondere in breve... 🎯'; }],
       [/\bgeo\b|generative engine|chatgpt|perplexity|gemini|ai overview|riassunt[io] (ai|dell.ai)|motori (di ricerca )?(ai|generativ)|\bllm\b|llms\.txt|(trovare|citare|citat[oa]) dall[ae]? (ai|intelligenz)/, function () { later(function () { openUx(false, 'geo'); }, 400); return 'Guardo la pagina con gli occhi delle AI... 🤖'; }],
       [/non vedent|ciech|cieco|ipovedent|screen ?reader|lettore di schermo|accessibil|testi alternativ|\balt\b|descrizion[ei] (delle |alle )?immagin/, function () { later(function () { openUx(false, 'a11y'); }, 400); return 'Ti dico come migliorare la pagina per chi non vede... ♿'; }],
@@ -5038,6 +5046,8 @@ window.__MASCOT_SRC = function (opts) {
   // Regole automatiche (niente IA): cose che non funzionano, che non si vedono bene, accessibilità
   // e consigli per la conversione. Ogni voce può indicare uno o più elementi della pagina.
   var ux = { list: null, at: 0, lcp: 0, cls: 0, failed: [], hinted: false, lastPoint: -99999, focus: null, focusUntil: 0, cursor: {} };
+  // indirizzi scaricati da Nimblu stesso (GEO, vista telefono): un loro 404 non è un errore della pagina
+  var ownReq = {};
   try {
     new PerformanceObserver(function (l) { var e = l.getEntries(); if (e.length) ux.lcp = e[e.length - 1].startTime; }).observe({ type: 'largest-contentful-paint', buffered: true });
     new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { if (!e.hadRecentInput) ux.cls += e.value; }); }).observe({ type: 'layout-shift', buffered: true });
@@ -5106,7 +5116,7 @@ window.__MASCOT_SRC = function (opts) {
     var cur = { cat: 'Altro', w: 5 };
     function chk(cat, w) { cur = { cat: cat, w: w }; }
     function add(sev, title, detail, els, p) { out.push({ sev: sev, title: title, detail: detail, els: (els || []).filter(Boolean), cat: cur.cat, w: cur.w, p: p != null ? clamp(p, 0, 1) : PTS[sev] }); }
-    var all = document.body.querySelectorAll('*'), n = Math.min(all.length, 4000), vh = innerHeight, vw = innerWidth;
+    var all = document.body.querySelectorAll('*'), n = Math.min(all.length, 4000), vh = AV.h, vw = AV.w, sy = AV.sy, fixedAll = [];
     var lowC = [], small = [], tiny = [], emptyBtn = [], deadLinks = [], worst = 99;
     var ctas = [], ctasFold = [], genericCta = [];
     for (var i = 0; i < n; i++) {
@@ -5115,6 +5125,7 @@ window.__MASCOT_SRC = function (opts) {
       var cs = getComputedStyle(el), r = visibleBox(el, cs);
       if (!r) continue;
       var tag = el.tagName, txt = ownText(el), fs = parseFloat(cs.fontSize) || 16;
+      if (cs.position === 'fixed' || cs.position === 'sticky') fixedAll.push([el, cs.position, r]);
       if (txt.length > 1) {
         if (fs < 12 && txt.length > 3) small.push(el);
         var fg = parseColor(cs.color), bg = bgOf(el);
@@ -5136,7 +5147,7 @@ window.__MASCOT_SRC = function (opts) {
         var filled = parseColor(cs.backgroundColor);
         if (lb && (CTA_RE.test(lb) || (isBtn && filled && filled.a > 0.5))) {
           ctas.push(el);
-          if (r.top + scrollY < vh) ctasFold.push(el);
+          if (r.top + sy < vh) ctasFold.push(el);
           if (GENERIC_RE.test(lb)) genericCta.push(el);
         }
       }
@@ -5144,15 +5155,16 @@ window.__MASCOT_SRC = function (opts) {
 
     // --- cose che non funzionano ---
     var broken = [].filter.call(document.images, function (im) { return im.complete && im.naturalWidth === 0 && (im.currentSrc || im.src) && !uxOurs(im); });
-    ux.failed.forEach(function (t) { if (broken.indexOf(t) < 0 && t.tagName === 'IMG') broken.push(t); });
+    if (!AV.mobile) ux.failed.forEach(function (t) { if (broken.indexOf(t) < 0 && t.tagName === 'IMG') broken.push(t); });
     chk('Funziona', 15); if (broken.length) add('error', broken.length === 1 ? 'Un\'immagine non si carica' : broken.length + ' immagini non si caricano', 'Al loro posto c\'è un riquadro vuoto: controlla il percorso del file (' + fileName(broken[0].currentSrc || broken[0].src) + ').', broken); else add('ok', 'Tutte le immagini si caricano', 'Nessuna immagine rotta.');
     var res = [];
-    try { res = performance.getEntriesByType('resource').filter(function (e) { return e.responseStatus >= 400; }); } catch (e) {}
+    try { res = performance.getEntriesByType('resource').filter(function (e) { return e.responseStatus >= 400 && !ownReq[e.name]; }); } catch (e) {}
     chk('Funziona', 10); if (res.length) add('error', res.length === 1 ? 'Un file risponde con errore' : res.length + ' file rispondono con errore', res.slice(0, 3).map(function (e) { return fileName(e.name) + ' (' + e.responseStatus + ')'; }).join(', ') + '. Se è uno script o un foglio di stile, parte della pagina potrebbe non funzionare.'); else add('ok', 'Nessun file in errore', 'Script, fogli di stile e immagini rispondono tutti.');
-    chk('Funziona', 12); if (root.scrollWidth > vw + 2) {
+    var docEl = document.documentElement;
+    chk('Funziona', 12); if (docEl.scrollWidth > vw + 2) {
       var culprit = null;
       for (var j = 0; j < n; j++) { var e2 = all[j]; if (uxOurs(e2)) continue; var rr = e2.getBoundingClientRect(); if (rr.width && rr.right > vw + 2 && rr.width < vw * 1.5) culprit = e2; }
-      add('error', 'La pagina scorre di lato', 'Qualcosa è più largo dello schermo (' + root.scrollWidth + ' px su ' + vw + '): su telefono si vede tagliato e ci si sposta per sbaglio.', [culprit]);
+      add('error', 'La pagina scorre di lato', 'Qualcosa è più largo dello schermo (' + docEl.scrollWidth + ' px su ' + vw + '): su telefono si vede tagliato e ci si sposta per sbaglio.', [culprit]);
     } else add('ok', 'Niente scroll laterale', 'La pagina sta nella larghezza dello schermo.');
     var overlays = [].filter.call(n ? all : [], function (el) {
       if (uxOurs(el)) return false;
@@ -5173,11 +5185,13 @@ window.__MASCOT_SRC = function (opts) {
     var nav = null;
     try { nav = performance.getEntriesByType('navigation')[0]; } catch (e) {}
     var loadS = nav && nav.loadEventEnd > 0 ? nav.loadEventEnd / 1000 : 0;
+    if (!AV.mobile) {
     chk('Velocità', 12); if (ux.lcp > 2500) add('warn', 'Il contenuto principale arriva tardi', 'L\'elemento più grande compare dopo ' + (ux.lcp / 1000).toFixed(1) + ' s (bene sotto 2,5 s): comprimi le immagini in alto e rimanda gli script.', null, ux.lcp > 4000 ? 0.1 : 0.45);
     else if (loadS > 4) add('warn', 'La pagina è lenta a caricare', 'Caricamento completo in ' + loadS.toFixed(1) + ' s: oltre i 3 secondi molti se ne vanno.'); else add('ok', ux.lcp ? 'Contenuto principale veloce' : 'Caricamento veloce', ux.lcp ? 'Compare in ' + (ux.lcp / 1000).toFixed(1) + ' s (bene sotto 2,5 s).' : loadS ? 'Pagina pronta in ' + loadS.toFixed(1) + ' s.' : 'Nessun rallentamento misurato.');
     chk('Velocità', 8); if (ux.cls > 0.1) add('warn', 'La pagina "salta" mentre carica', 'Gli elementi si spostano (CLS ' + ux.cls.toFixed(2) + ', bene sotto 0,1): dai dimensioni fisse a immagini e banner.', null, ux.cls > 0.25 ? 0.1 : 0.45); else add('ok', 'Pagina stabile mentre carica', 'CLS ' + ux.cls.toFixed(2) + ' (bene sotto 0,1).');
+    }
     var heavy = [];
-    try { heavy = performance.getEntriesByType('resource').filter(function (e) { return e.initiatorType === 'img' && e.transferSize > 400000; }); } catch (e) {}
+    if (!AV.mobile) try { heavy = performance.getEntriesByType('resource').filter(function (e) { return e.initiatorType === 'img' && e.transferSize > 400000; }); } catch (e) {}
     var oversized = [].filter.call(document.images, function (im) { var r = im.getBoundingClientRect(); return im.naturalWidth > 1400 && r.width > 0 && im.naturalWidth > r.width * 2.5 && !uxOurs(im); });
     chk('Velocità', 6); if (heavy.length || oversized.length) add('tip', 'Immagini più pesanti del necessario', heavy.length ? heavy.length + ' immagini superano i 400 KB (es. ' + fileName(heavy[0].name) + '): usa WebP e dimensioni adatte.' : 'Alcune immagini sono molto più grandi di come vengono mostrate: ridimensionale per velocizzare la pagina.', oversized); else if (document.images.length) add('ok', 'Immagini leggere', 'Nessuna immagine troppo pesante.');
 
@@ -5206,7 +5220,7 @@ window.__MASCOT_SRC = function (opts) {
     });
     if (h1.length) {
       var hr = h1[0].getBoundingClientRect();
-      chk('Conversione', 6); if (hr.top + scrollY > vh) add('tip', 'Il titolo è sotto la prima schermata', 'Chi arriva deve capire in 5 secondi cosa offri: porta il titolo in alto.', [h1[0]]); else add('ok', 'Titolo visibile subito', 'Si vede senza scorrere.', [h1[0]]);
+      chk('Conversione', 6); if (hr.top + sy > vh) add('tip', 'Il titolo è sotto la prima schermata', 'Chi arriva deve capire in 5 secondi cosa offri: porta il titolo in alto.', [h1[0]]); else add('ok', 'Titolo visibile subito', 'Si vede senza scorrere.', [h1[0]]);
       var ht = (h1[0].innerText || '').trim();
       chk('Conversione', 3); if (ht.length > 80) add('tip', 'Titolo molto lungo', 'Il titolo ha ' + ht.length + ' caratteri: sotto i 60-70 si legge al volo. Sposta i dettagli nel sottotitolo.', [h1[0]]); else add('ok', 'Titolo conciso', ht.length + ' caratteri.');
     }
@@ -5222,6 +5236,38 @@ window.__MASCOT_SRC = function (opts) {
     var navLinks = [].filter.call(document.querySelectorAll('nav a, header a'), function (a) { return !uxOurs(a); });
     chk('Conversione', 3); if (navLinks.length > 9) add('tip', 'Menu con ' + navLinks.length + ' voci', 'Tante voci distraggono dall\'azione principale: raggruppale o riducile.'); else if (navLinks.length) add('ok', 'Menu essenziale', navLinks.length + ' voci.');
 
+    // --- solo nella vista telefono ---
+    if (AV.mobile) {
+      // campi con il testo sotto i 16 px: toccandoli Safari su iPhone ingrandisce la pagina
+      var zoomF = fields.filter(function (f) { return (parseFloat(getComputedStyle(f).fontSize) || 16) < 16; });
+      chk('Telefono', 6); if (zoomF.length) add('warn', zoomF.length + (zoomF.length === 1 ? ' campo fa' : ' campi fanno') + ' zoomare la pagina su iPhone', 'Il testo dei campi è di ' + Math.round(parseFloat(getComputedStyle(zoomF[0]).fontSize)) + ' px: sotto i 16 px Safari ingrandisce la pagina appena li tocchi e poi bisogna rimpicciolire a mano. Porta il carattere dei campi ad almeno 16 px.', zoomF, 0.35);
+      else if (fields.length) add('ok', 'I campi non fanno zoomare', 'Il testo dei campi è almeno 16 px.');
+      // email e telefono in un campo di testo normale: il telefono mostra la tastiera delle lettere
+      var KB = [[/e-?mail|posta/i, 'email', 'la tastiera con la @'], [/telefono|cellulare|phone|\btel\b|whatsapp/i, 'tel', 'il tastierino dei numeri']];
+      function fHint(f) { return [f.name, f.id, f.placeholder, f.getAttribute('aria-label'), f.getAttribute('autocomplete'), f.labels && f.labels[0] ? f.labels[0].textContent : ''].join(' '); }
+      var wrongKb = fields.filter(function (f) { return f.tagName === 'INPUT' && f.type === 'text' && !f.getAttribute('inputmode') && KB.some(function (k) { return k[0].test(fHint(f)); }); });
+      chk('Telefono', 5); if (wrongKb.length) {
+        var k0 = KB.filter(function (k) { return k[0].test(fHint(wrongKb[0])); })[0], n0 = (wrongKb[0].labels && wrongKb[0].labels[0] && wrongKb[0].labels[0].textContent.trim()) || wrongKb[0].placeholder || wrongKb[0].name;
+        add('warn', wrongKb.length + (wrongKb.length === 1 ? ' campo apre' : ' campi aprono') + ' la tastiera sbagliata', '«' + shortTxt(n0, 30) + '» è un campo di testo normale: con type="' + k0[1] + '" il telefono mostra ' + k0[2] + '. In Contact Form 7 usa [' + k0[1] + '], in Elementor il tipo «' + (k0[1] === 'tel' ? 'Tel' : 'Email') + '».', wrongKb);
+      } else if (fields.length) add('ok', 'Tastiera giusta nei campi', 'Email e telefono aprono la tastiera adatta.');
+      // header, barre e banner fissi: quanto schermo resta al contenuto
+      var bars = [];
+      fixedAll.forEach(function (x) {
+        var e3 = x[0], r3 = x[2];
+        if (r3.width < vw * 0.5 || r3.height > vh * 0.6 || r3.bottom <= 0 || r3.top >= vh) return;
+        if (x[1] === 'sticky' && r3.top > 2 && r3.bottom < vh - 2) return;
+        if (bars.some(function (b) { return b.contains(e3); })) return;
+        bars.push(e3);
+      });
+      var barH = bars.reduce(function (s, e3) { var r3 = e3.getBoundingClientRect(); return s + Math.max(0, Math.min(r3.bottom, vh) - Math.max(r3.top, 0)); }, 0), barP = Math.round(barH / vh * 100);
+      chk('Telefono', 8); if (barP > 25) add('warn', 'Le barre fisse coprono il ' + barP + '% dello schermo', 'Header, banner o barre che restano fermi tolgono spazio al contenuto: su telefono resta poco da leggere. Rimpicciolisci l\'header quando si scorre o togli le barre meno utili.', bars, barP > 40 ? 0.1 : 0.4);
+      else add('ok', 'Barre fisse leggere', bars.length ? 'Header e barre fisse occupano il ' + barP + '% dello schermo.' : 'Nessuna barra fissa copre il contenuto.', bars);
+      // numero di telefono scritto ma non toccabile
+      var telA = document.querySelector('a[href^="tel:"]'), ph = /(?:\+39[\s.]?\d[\d\s.]{6,12}\d|\b(?:0\d{1,3}|3\d{2})[\s.\/-]\d{3,4}[\s.]?\d{2,4}\b)/.exec(body);
+      chk('Telefono', 5); if (telA) add('ok', 'Telefono da toccare', 'Il numero si chiama con un tocco.', [telA]);
+      else if (ph) add('warn', 'Il numero di telefono non si può toccare', '«' + ph[0].trim() + '» è solo testo: su telefono va copiato a mano. Mettilo in un link: <a href="tel:' + ph[0].replace(/[^\d+]/g, '') + '">.', null, 0.35);
+    }
+
 
     var order = { error: 0, warn: 1, tip: 2, ok: 3 };
     out.sort(function (a, b) { return order[a.sev] - order[b.sev]; });
@@ -5233,7 +5279,7 @@ window.__MASCOT_SRC = function (opts) {
   // presi sul totale (anche per categoria). Contano sia i problemi sia i controlli superati.
   var PTS = { error: 0, warn: 0.35, tip: 0.7, ok: 1 };
   var CATS = {
-    ux: [['Funziona', '🧰'], ['Leggibilità', '👀'], ['Velocità', '⚡'], ['Accessibilità', '♿'], ['Conversione', '🎯']],
+    ux: [['Telefono', '📱'], ['Funziona', '🧰'], ['Leggibilità', '👀'], ['Velocità', '⚡'], ['Accessibilità', '♿'], ['Conversione', '🎯']],
     seo: [['Google', '🔎'], ['Titoli', '🔠'], ['Testi', '📝'], ['Immagini e link', '🖼️'], ['Tecnica', '⚙️'], ['Social e dati', '🔗']],
     a11y: [['Immagini', '🖼️'], ['Link e bottoni', '🔗'], ['Moduli', '📝'], ['Struttura', '🧭'], ['Video e frame', '🎬'], ['Tastiera', '⌨️']],
     geo: [['Accesso AI', '🤖'], ['Risposte', '💬'], ['Fiducia', '🏅'], ['Dati strutturati', '🧩']],
@@ -5334,7 +5380,7 @@ window.__MASCOT_SRC = function (opts) {
     var longP = ps.filter(function (p) { return seoWords(p.innerText).length > 120; });
     chk('Testi', 5); if (longP.length) add('tip', longP.length + (longP.length === 1 ? ' paragrafo lungo' : ' paragrafi lunghi'), 'Sopra le 120 parole il testo diventa un muro: spezzalo in paragrafi più corti o in elenchi puntati.', longP); else if (ps.length) add('ok', 'Paragrafi di lunghezza giusta', 'Nessun muro di testo.');
     // leggibilità: indice Gulpease (pensato per l'italiano): 89 + (300·frasi − 10·lettere) / parole
-    var lang = (root.getAttribute('lang') || '').toLowerCase(), itWords = words.filter(function (w) { return /^(il|la|di|che|e|per|con|una|del|della|sono)$/.test(w); }).length;
+    var lang = (document.documentElement.getAttribute('lang') || '').toLowerCase(), itWords = words.filter(function (w) { return /^(il|la|di|che|e|per|con|una|del|della|sono)$/.test(w); }).length;
     var italian = /^it/.test(lang) || (!lang && itWords > nw * 0.04);
     // solo i paragrafi veri: titoli ed elenchi sono frasi corte e falserebbero l'indice
     var ptext = blocks.filter(function (el) { return /^(P|BLOCKQUOTE|DD)$/.test(el.tagName) && seoWords(txt(el)).length >= 8; }).map(function (el) { return txt(el).replace(/[^.!?…]$/, '$&.'); }).join(' ');
@@ -5544,7 +5590,7 @@ window.__MASCOT_SRC = function (opts) {
       return t.length >= 3 && t.length <= 120 && !GENERIC_RE.test(t) && /[a-zà-ÿ]{3}/i.test(t) ? t.replace(/[.:;,]+$/, '') : '';
     }
     var p = el.parentElement;
-    for (var up = 0; p && up < 4 && p !== document.body && p !== root; up++, p = p.parentElement) {
+    for (var up = 0; p && up < 4 && p !== document.body && p !== document.documentElement; up++, p = p.parentElement) {
       if (up && p.querySelectorAll('img').length > 3) break;   // contenitore con tante immagini: il testo potrebbe essere di un'altra
       var hs = p.querySelectorAll('h1,h2,h3,h4,h5,h6,[role="heading"]'), i, t;
       for (i = 0; i < hs.length; i++) if ((t = ok(hs[i]))) return shortTxt(t, 90);
@@ -5771,7 +5817,7 @@ window.__MASCOT_SRC = function (opts) {
     else if (fields.length) add('ok', 'Campi obbligatori riconoscibili', 'Segnati in modo che lo screen reader li annunci.');
 
     // --- struttura: titolo, lingua, titoli e zone per orientarsi ---
-    var lang = root.getAttribute('lang');
+    var lang = document.documentElement.getAttribute('lang');
     chk('Struttura', 8);
     if (!lang) add('warn', 'Indica la lingua della pagina', 'Senza, lo screen reader non sa con che voce leggere e rischia di pronunciare l\'italiano con l\'accento inglese.', [], null, {
       code: '<html lang="' + guessLang() + '">', where: pf.wp ? 'In WordPress la mette il tema (in header.php: <html <?php language_attributes(); ?>>) in base a Impostazioni → Generali → Lingua del sito.' : '' });
@@ -5920,7 +5966,7 @@ window.__MASCOT_SRC = function (opts) {
     var n = geo.net;
     if (!/^https?:$/.test(location.protocol) || n.state === 'loading' || (n.state === 'done' && !force)) return;
     n.state = 'loading';
-    function get(u) { return fetch(u, { credentials: 'omit', redirect: 'follow' }).then(function (r) { return r.ok ? r.text().then(function (t) { return { t: t, type: r.headers.get('content-type') || '' }; }) : null; }).catch(function () { return { err: true }; }); }
+    function get(u) { ownReq[u] = 1; return fetch(u, { credentials: 'omit', redirect: 'follow' }).then(function (r) { return r.ok ? r.text().then(function (t) { return { t: t, type: r.headers.get('content-type') || '' }; }) : null; }).catch(function () { return { err: true }; }); }
     Promise.all([get(location.origin + '/robots.txt'), get(location.origin + '/llms.txt'), get(location.href.split('#')[0])]).then(function (r) {
       n.robotsErr = !!(r[0] && r[0].err);
       n.robots = r[0] && !r[0].err && !/html/i.test(r[0].type) ? r[0].t : null;
@@ -5933,7 +5979,7 @@ window.__MASCOT_SRC = function (opts) {
         } catch (e) { n.rawWords = null; }
       } else n.rawWords = null;
       n.state = 'done';
-      geoAudit();
+      inMode(geoAudit);
       // aggiorna il pannello (anche il voto GEO sulla linguetta se si è su un'altra scheda) senza perdere lo scorrimento
       if (uxPanel.style.display === 'block') { var st = uxPanel.scrollTop; renderUx(); uxPanel.scrollTop = st; }
       if (geo.sayAfter) { geo.sayAfter = false; geoSay(); }
@@ -6343,6 +6389,10 @@ window.__MASCOT_SRC = function (opts) {
     '#__nimblu_ux summary{cursor:pointer;margin:0 0 4px;font:700 11px/1.3 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:#2f9e6a}' +
     '#__nimblu_ux .tabs button{padding:6px 2px;gap:3px;white-space:nowrap;font-size:11.5px}' +
     '#__nimblu_ux .tabs{gap:2px}#__nimblu_ux .tabs .score{padding:3px 4px}' +
+    '#__nimblu_ux .mode{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:3px;background:#e2eaf7;border-radius:11px;margin:2px 0 0}' +
+    '#__nimblu_ux .mode button{display:flex;align-items:center;justify-content:center;gap:5px;padding:5px 4px;border:0;background:transparent;font:700 12px/1.2 system-ui,-apple-system,sans-serif;color:#22314f}' +
+    '#__nimblu_ux .mode button[aria-pressed=true]{background:#2d3e63;color:#fff}' +
+    '#__nimblu_ux .mnote{margin:6px 0 0}' +
     '#__nimblu_ux table.geo{width:100%;border-collapse:separate;border-spacing:0;margin:0 0 8px;font:500 12px/1.4 system-ui,-apple-system,sans-serif;background:#fff;border:1px solid #dbe4f3;border-radius:10px;overflow:hidden}' +
     '#__nimblu_ux table.geo th,#__nimblu_ux table.geo td{padding:6px 8px;text-align:left;vertical-align:top;border-top:1px solid #e8eef8}' +
     '#__nimblu_ux table.geo thead th{border-top:0;background:#e8eef9;font:700 10.5px/1.3 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#4a5d82}' +
@@ -6385,11 +6435,126 @@ window.__MASCOT_SRC = function (opts) {
     tip: { h: 'Consigli', c: '#4f74b3' },
     ok: { h: 'Va bene', c: '#2f9e6a' }
   };
+  // ---------- vista telefono ----------
+  // Il controllo «da telefono» carica la stessa pagina in una cornice larga 390 px (un iPhone): il sito mostra il suo
+  // layout mobile e tutti i controlli (UX, SEO, GEO, AEO, non vedenti) girano su quella copia, con le misure del telefono.
+  // La cornice è senza JavaScript (sandbox senza allow-scripts): così non parte nessuno script di statistiche e non si
+  // conta una visita in più; prima di controllare si tolgono le animazioni d'entrata di Elementor che tengono nascosti
+  // gli elementi e si caricano le immagini «lazy». La cornice resta visibile come anteprima accanto al pannello:
+  // cliccando un problema la pagina dentro scorre fin lì e l'elemento si illumina.
+  var mob = { frame: null, doc: null, win: null, w: 390, h: 844, state: 'off', cbs: [], err: '', ratio: 1, hidden: false };
+  // misure dello «schermo» per i controlli: quelle della finestra, o del telefono nella vista telefono
+  var AV = { w: innerWidth, h: innerHeight, sy: 0, mobile: false };
+  function inMode(fn) {
+    var m = ux.mobile && mob.state === 'ready' && mob.doc, d0 = document;
+    AV = m ? { w: mob.w, h: mob.h, sy: (mob.win && mob.win.scrollY) || 0, mobile: true } : { w: innerWidth, h: innerHeight, sy: scrollY, mobile: false };
+    if (m) document = mob.doc;
+    try { return fn(); } finally { document = d0; }
+  }
+  function runAudits() { inMode(function () { audit(); seoAudit(); a11yAudit(); geoAudit(); aeoAudit(); }); }
+  function mobileStart(cb) {
+    if (mob.state === 'ready') { if (cb) cb(); return; }
+    if (cb) mob.cbs.push(cb);
+    if (mob.state === 'loading') return;
+    mob.state = 'loading'; mob.err = '';
+    var f = mk('iframe', ('position:fixed;top:16px;left:-9999px;right:auto;bottom:auto;margin:0;padding:0;box-sizing:content-box;width:' + mob.w + 'px;height:' + mob.h + 'px;max-width:none;max-height:none;min-width:0;min-height:0;border:10px solid #1b2742;border-radius:34px;background:#fff;opacity:1;visibility:visible;display:block;z-index:' + Z + ';box-shadow:0 18px 50px rgba(20,30,60,.35);transform-origin:top left').replace(/;/g, ' !important;') + ' !important');
+    f.setAttribute('sandbox', 'allow-same-origin');
+    f.setAttribute('title', 'Anteprima della pagina su telefono');
+    f.setAttribute('aria-hidden', 'true');
+    f.tabIndex = -1;
+    mob.frame = f;
+    var done = false;
+    function finish(ok, why) {
+      if (done) return; done = true;
+      clearTimeout(mob.timer);
+      if (!ok) { mob.state = 'error'; mob.err = why || ''; mobileStop(true); }
+      else {
+        mob.state = 'ready';
+        // quanto testo si vede senza JavaScript rispetto alla pagina vera (i siti fatti tutti in JS restano quasi vuoti)
+        var wd = function (d) { return ((d.body && d.body.innerText) || '').split(/\s+/).filter(Boolean).length; };
+        try { mob.ratio = Math.min(1, wd(mob.doc) / Math.max(1, wd(window.document))); } catch (e) { mob.ratio = 1; }
+      }
+      var cbs = mob.cbs; mob.cbs = [];
+      cbs.forEach(function (c) { c(); });
+    }
+    mob.timer = setTimeout(function () { finish(false, 'La pagina non si è caricata in tempo nella vista telefono.'); }, 15000);
+    // si scarica l'HTML e lo si mette nella cornice senza script: così la cornice non li blocca uno a uno (niente errori
+    // rossi in console), non scattano i redirect e funziona anche sui siti che vietano di essere messi in un iframe
+    var url = location.href.split('#')[0];
+    ownReq[url] = 1;
+    fetch(url, { credentials: 'same-origin', cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }).then(function (html) {
+      if (done) return;
+      var d = new DOMParser().parseFromString(html, 'text/html');
+      [].forEach.call(d.querySelectorAll('script'), function (s) { var t = (s.getAttribute('type') || '').trim(); if (!t || /javascript|ecmascript|jscript|^(module|importmap|speculationrules)$/i.test(t)) s.remove(); });
+      [].forEach.call(d.querySelectorAll('meta[http-equiv]'), function (m) { if (/refresh/i.test(m.getAttribute('http-equiv'))) m.remove(); });
+      [].forEach.call(d.querySelectorAll('*'), function (e) { for (var i = e.attributes.length - 1; i >= 0; i--) if (/^on/i.test(e.attributes[i].name)) e.removeAttribute(e.attributes[i].name); });
+      // senza JavaScript: niente animazioni d'entrata che nascondono gli elementi, immagini «lazy» caricate subito
+      [].forEach.call(d.querySelectorAll('.elementor-invisible'), function (e) { e.classList.remove('elementor-invisible'); });
+      [].forEach.call(d.querySelectorAll('img,iframe,source,video'), function (e) {
+        var src = e.getAttribute('data-src') || e.getAttribute('data-lazy-src'), set = e.getAttribute('data-srcset') || e.getAttribute('data-lazy-srcset');
+        if (src && (!e.getAttribute('src') || /^data:/.test(e.getAttribute('src')))) e.setAttribute('src', src);
+        if (set) e.setAttribute('srcset', set);
+        if (e.getAttribute('loading') === 'lazy') e.setAttribute('loading', 'eager');
+        if (/^(VIDEO|AUDIO)$/.test(e.tagName)) { e.removeAttribute('autoplay'); e.setAttribute('muted', ''); }
+      });
+      if (!d.querySelector('base[href]') && d.head) { var bs = d.createElement('base'); bs.setAttribute('href', url); d.head.insertBefore(bs, d.head.firstChild); }
+      f.addEventListener('load', function () {
+        var cd = null;
+        try { cd = f.contentDocument; } catch (e) {}
+        if (!cd || !cd.body) { finish(false, 'Non riesco ad aprire la vista telefono su questa pagina.'); return; }
+        mob.doc = cd; mob.win = f.contentWindow;
+        mobilePlace();
+        setTimeout(function () { finish(true); }, 1200);
+      });
+      f.srcdoc = (/^\s*<!doctype/i.test(html) ? '<!doctype html>' : '') + d.documentElement.outerHTML;
+    }).catch(function (e) { finish(false, 'Non riesco a scaricare la pagina per la vista telefono (' + (e && e.message || 'errore di rete') + ').'); });
+  }
+  function mobileStop(keepErr) {
+    clearTimeout(mob.timer);
+    if (mob.frame) mob.frame.remove();
+    mob.frame = null; mob.doc = null; mob.win = null;
+    if (!keepErr) { mob.state = 'off'; mob.err = ''; }
+  }
+  // l'anteprima accanto al pannello, rimpicciolita per stare nello schermo (fuori schermo se non c'è spazio)
+  function mobilePlace() {
+    var f = mob.frame;
+    if (!f) return;
+    var s = Math.min(0.62, (innerHeight - 32) / (mob.h + 20)), wpx = (mob.w + 20) * s, panelLeft = uxPanel.style.left === '16px';
+    function st(k, v) { f.style.setProperty(k, v, 'important'); }
+    mob.hidden = uxPanel.style.display !== 'block' || innerWidth < 340 + wpx + 60;
+    st('transform', 'scale(' + s + ')');
+    if (mob.hidden) { st('left', '-9999px'); st('right', 'auto'); return; }
+    st('transform-origin', panelLeft ? 'top left' : 'top right');
+    if (panelLeft) { st('left', (16 + 340 + 14) + 'px'); st('right', 'auto'); }
+    else { st('left', 'auto'); st('right', (16 + 340 + 14) + 'px'); }
+  }
+  // nella vista telefono «porta lì» scorre la pagina dentro l'anteprima e illumina l'elemento
+  function mobileFocus(el, sev) {
+    var se = mob.doc && mob.doc.scrollingElement, r = el.getBoundingClientRect();
+    if (se) se.scrollTop += r.top - (mob.h - Math.min(r.height, mob.h * 0.6)) / 2;
+    var c = SEV[sev] ? SEV[sev].c : '#4f74b3', o = el.style.outline, oo = el.style.outlineOffset;
+    el.style.outline = '5px dashed ' + c; el.style.outlineOffset = '3px';
+    setTimeout(function () { el.style.outline = o; el.style.outlineOffset = oo; }, 4500);
+  }
+  function setMobile(on) {
+    ux.mobile = !!on;
+    if (!on) { mobileStop(); runAudits(); renderUx(); say('Torno alla vista computer. 🖥'); return; }
+    renderUx();
+    say('Apro la pagina come su un telefono... 📱');
+    mobileStart(function () {
+      if (!ux.mobile) return;
+      if (mob.state === 'error') { ux.mobile = false; runAudits(); renderUx(); say(mob.err || 'Non riesco ad aprire la vista telefono qui.'); return; }
+      mobilePlace(); runAudits(); renderUx();
+      uxSpeak();
+    });
+  }
+  addEventListener('resize', mobilePlace);
+
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function scoreBadge(sc) { return '<span class="score" style="background:' + (sc >= 80 ? '#2f9e6a' : sc >= 55 ? '#e08a1e' : '#d64545') + '">' + sc + '</span>'; }
   function renderUx() {
     var tab = curTab();
-    var html = '<div class="hd"><b>🔍 Controllo della pagina</b><button type="button" class="x" data-ux="close" aria-label="Chiudi">✕</button></div>' +
+    var html = '<div class="hd"><b>🔍 Controllo della pagina</b><button type="button" class="x" data-ux="close" aria-label="Chiudi">✕</button></div>' + modeHtml() +
       '<div class="tabs"><button type="button" data-tab="ux" aria-pressed="' + (tab === 'ux') + '" title="Usabilità e conversione">UX ' + scoreBadge(uxScore()) + '</button>' +
       '<button type="button" data-tab="seo" aria-pressed="' + (tab === 'seo') + '">SEO ' + scoreBadge(seoScore()) + '</button>' +
       '<button type="button" data-tab="geo" aria-pressed="' + (tab === 'geo') + '" title="GEO: farsi trovare e citare da ChatGPT, Perplexity, Gemini e dai riassunti AI di Google">GEO ' + scoreBadge(geoScore()) + '</button>' +
@@ -6439,6 +6604,15 @@ window.__MASCOT_SRC = function (opts) {
     html += '<button type="button" class="re" data-ux="again">↻ Controlla di nuovo</button>';
     uxPanel.innerHTML = html;
   }
+  // computer o telefono: la seconda rifà tutti i controlli sulla pagina larga 390 px
+  function modeHtml() {
+    var m = !!ux.mobile, h = '<div class="mode"><button type="button" data-mode="desk" aria-pressed="' + !m + '">🖥 Computer</button><button type="button" data-mode="mob" aria-pressed="' + m + '" title="Rifà i controlli sulla pagina larga 390 px, come su un iPhone">📱 Telefono</button></div>';
+    if (m && mob.state === 'loading') h += '<p class="sub mnote">⏳ Apro la pagina larga ' + mob.w + ' px, come su un iPhone…</p>';
+    else if (m && mob.state === 'ready') h += '<p class="sub mnote">📱 Pagina larga ' + mob.w + ' px, come su un iPhone, aperta senza JavaScript: così non conta una visita in più nelle statistiche. La velocità qui non si misura.' +
+      (mob.ratio < 0.5 ? ' <b>Senza JavaScript si vede solo il ' + Math.round(mob.ratio * 100) + '% del testo: alcuni risultati potrebbero non essere giusti.</b>' : '') +
+      (mob.hidden ? ' Allarga la finestra per vedere l\'anteprima accanto al pannello.' : ' Clicca una voce: la vedi nell\'anteprima.') + '</p>';
+    return h;
+  }
   // barre dei punteggi per categoria (cliccandone una si vedono solo i suoi controlli)
   function catsHtml(tab, L) {
     var sel = (ux.cat || {})[tab];
@@ -6466,15 +6640,22 @@ window.__MASCOT_SRC = function (opts) {
     });
     return html;
   }
-  function openUx(silent, tab) {
+  function openUx(silent, tab, mobile) {
     if (tab) ux.tab = tab;
-    audit(); seoAudit(); a11yAudit(); geoAudit(); aeoAudit(); geoFetch(); renderUx();
+    runAudits(); geoFetch(); renderUx();
     uxPanel.style.display = 'block';
     var left = M.x - scrollX > W / 2;
     uxPanel.style.left = left ? '16px' : 'auto';
     uxPanel.style.right = left ? 'auto' : '16px';
     closeMenu();
+    if (mobile && !ux.mobile) { setMobile(true); happy(); return; }
+    mobilePlace();
     if (silent) return;
+    uxSpeak();
+    happy();
+  }
+  // il riassunto a voce della scheda aperta
+  function uxSpeak() {
     var tk = curTab(), isSeo = tk === 'seo', sc = scoreOf(tabList(tk)), weak = catScores(tk).sort(function (a, b) { return a.sc - b.sc; })[0];
     if (tk === 'aeo') aeoSay();
     else if (tk === 'geo') {
@@ -6483,12 +6664,15 @@ window.__MASCOT_SRC = function (opts) {
     }
     else if (tk === 'a11y') {
       var top = (a11y.list || []).filter(function (f) { return f.sev !== 'ok'; }).sort(function (a, b) { return a11yGain(b) - a11yGain(a); })[0];
-      say('Per chi non vede: ' + sc + '/100. ' + (top ? 'Primo consiglio: ' + top.title.charAt(0).toLowerCase() + top.title.slice(1) + (top.sug && top.sug[0] ? ', per esempio ' + top.sug[0] : top.code ? ': ' + top.code : '') + '. Gli altri sono nel pannello, con i testi pronti.' : 'Si usa bene anche senza vederla! ♿'));
+      say('Per chi non vede' + (ux.mobile ? ', da telefono' : '') + ': ' + sc + '/100. ' + (top ? 'Primo consiglio: ' + top.title.charAt(0).toLowerCase() + top.title.slice(1) + (top.sug && top.sug[0] ? ', per esempio ' + top.sug[0] : top.code ? ': ' + top.code : '') + '. Gli altri sono nel pannello, con i testi pronti.' : 'Si usa bene anche senza vederla! ♿'));
     }
-    else say((isSeo ? 'SEO ' : 'UX ') + sc + '/100' + (weak && weak.sc < 80 ? ': il punto più debole è «' + weak.name + '» (' + weak.sc + '). Clicca una voce e ti porto lì.' : isSeo ? ': per la SEO la pagina è messa bene! 🔎' : ': la pagina mi sembra in ordine! 👍'));
-    happy();
+    else say((ux.mobile ? 'Da telefono: ' : '') + (isSeo ? 'SEO ' : 'UX ') + sc + '/100' + (weak && weak.sc < 80 ? ': il punto più debole è «' + weak.name + '» (' + weak.sc + '). Clicca una voce e ti porto lì.' : isSeo ? ': per la SEO la pagina è messa bene! 🔎' : ': la pagina mi sembra in ordine! 👍'));
   }
-  function closeUx() { uxPanel.style.display = 'none'; ux.focus = null; }
+  function closeUx() {
+    uxPanel.style.display = 'none'; ux.focus = null;
+    // chiudendo si torna alla pagina vera: i risultati devono puntare ai suoi elementi
+    if (ux.mobile || mob.frame) { ux.mobile = false; mobileStop(); runAudits(); }
+  }
   // porta la pagina sull'elemento, lo evidenzia e Nimblu ci salta sopra a spiegarlo
   function pointAt(f) {
     if (!f) return;
@@ -6497,6 +6681,11 @@ window.__MASCOT_SRC = function (opts) {
     var el = k >= 0 ? f.els[k] : null;
     var more = f.els.length > 1 ? ' (' + (k + 1) + ' di ' + f.els.length + ')' : '';
     if (!el) { say(f.title + ': ' + f.detail); return; }
+    if (el.ownerDocument !== window.document) {
+      mobileFocus(el, f.sev);
+      say(f.title + more + (f.sug && f.sug[k] ? '. Prova così: ' + f.sug[k] : f.detail ? '. ' + f.detail : '') + (mob.hidden ? '' : ' 📱'));
+      return;
+    }
     try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { el.scrollIntoView(); }
     ux.focus = { el: el, sev: f.sev }; ux.focusUntil = frame + 420;
     say(f.title + more + (f.sug && f.sug[k] ? '. Prova così: ' + f.sug[k] : f.detail ? '. ' + f.detail : ''));
@@ -6515,7 +6704,9 @@ window.__MASCOT_SRC = function (opts) {
     e.preventDefault(); e.stopPropagation();
     var a = b.getAttribute('data-ux');
     if (a === 'close') { closeUx(); return; }
-    if (a === 'again') { audit(); seoAudit(); a11yAudit(); geoFetch(true); geoAudit(); aeoAudit(); renderUx(); say('Ricontrollato!'); return; }
+    if (a === 'again') { geoFetch(true); runAudits(); renderUx(); say('Ricontrollato!'); return; }
+    var md = b.getAttribute('data-mode');
+    if (md) { if ((md === 'mob') !== !!ux.mobile) setMobile(md === 'mob'); return; }
     var tb = b.getAttribute('data-tab');
     if (tb) { ux.tab = tb; renderUx(); return; }
     var ct = b.getAttribute('data-cat');
@@ -6583,7 +6774,7 @@ window.__MASCOT_SRC = function (opts) {
   }
   // ogni tanto, da solo, segnala un problema che ha vicino
   function uxNearby() {
-    if (!prefs.tips || !ux.list || frame - ux.lastPoint < 5400) return false;
+    if (!prefs.tips || !ux.list || ux.mobile || frame - ux.lastPoint < 5400) return false;
     var cand = ux.list.filter(function (f) {
       if (f.sev === 'ok' || !f.els.length) return false;
       var r = rectOf(f.els[0]);
@@ -6598,7 +6789,7 @@ window.__MASCOT_SRC = function (opts) {
     return true;
   }
   function uxAutoHint() {
-    if (ux.hinted || !prefs.tips || frame < 480 || !M.att || level === 'angolo' || level === 'calmo' || M.zoom || M.ball || F) return;
+    if (ux.hinted || ux.mobile || !prefs.tips || frame < 480 || !M.att || level === 'angolo' || level === 'calmo' || M.zoom || M.ball || F) return;
     ux.hinted = true;
     audit();
     var e = uxCount('error'), w = uxCount('warn');
@@ -6791,6 +6982,8 @@ window.__MASCOT_SRC = function (opts) {
   function stop() {
     cancelAnimationFrame(raf);
     removeEventListener('resize', resize);
+    removeEventListener('resize', mobilePlace);
+    mobileStop();
     removeEventListener('scroll', onScroll);
     removeEventListener('pointermove', onMove, true);
     removeEventListener('pointerdown', outside, true);
