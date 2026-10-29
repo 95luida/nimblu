@@ -6,7 +6,7 @@
 
 Nimblu è una mascotte (un axolotl) che cammina sulle pagine che visiti. Quando glielo chiedi, controlla la pagina e ti dice cosa migliorare: ogni problema ha un voto, una spiegazione e un clic che ti porta dritto all’elemento da sistemare. Nelle pause gioca: fa a botte con l’omino del jetpack, corre come i gatti, insegue la pallina e mangia le lettere (poi le ridà).
 
-▶ **Provalo senza installare niente:** [pagina demo](https://95luida.github.io/nimblu/demo/) · 📄 [Presentazione in PDF](docs/Nimblu-presentazione.pdf)
+🌐 **Sito:** [dalpuntoweb.it/nimblu](https://www.dalpuntoweb.it/nimblu/) · ▶ **Provalo senza installare niente:** [pagina demo](https://95luida.github.io/nimblu/demo/) · 📄 [Presentazione in PDF](docs/Nimblu-presentazione.pdf)
 
 > Interfaccia e testi in italiano.
 
