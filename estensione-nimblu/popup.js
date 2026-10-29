@@ -35,6 +35,24 @@ chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
   });
 });
 
+// ---------- controllo della pagina (anche con Nimblu nascosto o spento) ----------
+function runCheck(mobile) {
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    var t = tabs[0];
+    if (!t) return;
+    chrome.tabs.sendMessage(t.id, { type: 'nimblu-check', mobile: mobile }, function (r) {
+      if (chrome.runtime.lastError || !r || !r.ok) {
+        $('checkNote').hidden = false;
+        $('checkNote').textContent = /^(https?|file):/.test(t.url || '') ? 'Nimblu non è ancora su questa pagina: ricaricala e riprova.' : 'Chrome non permette di controllare questa pagina.';
+        return;
+      }
+      window.close();
+    });
+  });
+}
+$('check').addEventListener('click', function () { runCheck(false); });
+$('checkMob').addEventListener('click', function () { runCheck(true); });
+
 // ---------- rissa con l'omino ----------
 $('fight').addEventListener('click', function () {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {

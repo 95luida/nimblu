@@ -80,6 +80,7 @@ window.__MASCOT_SRC = function (opts) {
   water.id = '__nimblu_water';
   var grab = mk('div', 'position:fixed;left:0;top:0;width:10px;height:10px;z-index:' + Z + ';cursor:grab;border-radius:40%;touch-action:none;background:transparent');
   grab.title = 'Cliccami o trascinami';
+  if (opts.panelOnly) grab.style.display = 'none';
   // area cliccabile sull'omino durante la rissa (colpirlo aiuta Nimblu)
   var foeGrab = mk('div', 'position:fixed;left:0;top:0;width:10px;height:10px;z-index:' + Z + ';cursor:crosshair;display:none;touch-action:none;background:transparent');
   foeGrab.title = 'Colpisci l\'omino!';
@@ -6644,7 +6645,7 @@ window.__MASCOT_SRC = function (opts) {
     if (tab) ux.tab = tab;
     runAudits(); geoFetch(); renderUx();
     uxPanel.style.display = 'block';
-    var left = M.x - scrollX > W / 2;
+    var left = !opts.panelOnly && M.x - scrollX > W / 2;
     uxPanel.style.left = left ? '16px' : 'auto';
     uxPanel.style.right = left ? 'auto' : '16px';
     closeMenu();
@@ -6671,6 +6672,7 @@ window.__MASCOT_SRC = function (opts) {
   function closeUx() {
     uxPanel.style.display = 'none'; ux.focus = null;
     // chiudendo si torna alla pagina vera: i risultati devono puntare ai suoi elementi
+    if (opts.panelOnly) { stop(); return; }
     if (ux.mobile || mob.frame) { ux.mobile = false; mobileStop(); runAudits(); }
   }
   // porta la pagina sull'elemento, lo evidenzia e Nimblu ci salta sopra a spiegarlo
@@ -6692,7 +6694,7 @@ window.__MASCOT_SRC = function (opts) {
     later(function () {
       needRefresh = true; refresh();
       var r = rectOf(el);
-      if (!r || !M.att || /^(drag|fall)$/.test(M.mode)) return;
+      if (!r || opts.panelOnly || !M.att || /^(drag|fall)$/.test(M.mode)) return;
       M.plan = []; M.follow = 0;
       if (r.r - r.l > 2 * R && r.t > scrollY + 50 && r.t < scrollY + H - 20) jumpTo(el);
       else goWall(r.l - scrollX < W / 2 ? -1 : 1, clamp(r.t - scrollY, 80, H - 40));
@@ -6971,6 +6973,15 @@ window.__MASCOT_SRC = function (opts) {
   function loop(now) {
     var dt = Math.max(0, Math.min(2.5, (now - last) / 16.667));
     last = now; frame++;
+    // solo pannello (dall'icona dell'estensione, con Nimblu nascosto o spento): niente mascotte, niente salvataggi,
+    // solo il riquadro tratteggiato sull'elemento indicato
+    if (opts.panelOnly) {
+      ctx.clearRect(0, 0, W, H); ctx.save(); ctx.translate(-scrollX, -scrollY);
+      try { drawFocus(); } catch (e) {}
+      ctx.restore();
+      if (window.__mascot) raf = requestAnimationFrame(loop);
+      return;
+    }
     try { update(dt); } catch (e) { loopError(e); }
     if (!window.__mascot) return;
     if (frame % 90 === 0) saveState();
@@ -7017,6 +7028,9 @@ window.__MASCOT_SRC = function (opts) {
     // per l'app: fargli dire o fare qualcosa, o mandargli un messaggio come dalla chat
     say: function (t) { say(t); },
     act: function (n) { if (ACTIONS[n]) ACTIONS[n](); },
+    // apre il controllo della pagina (mobile: già nella vista telefono); panelOnly = istanza senza mascotte
+    check: function (mobile) { if (!opts.panelOnly) wake(); if (uxPanel.style.display === 'block' && !!ux.mobile === !!mobile) return; if (uxPanel.style.display === 'block') setMobile(!!mobile); else openUx(false, null, !!mobile); },
+    panelOnly: !!opts.panelOnly,
     chat: function (q) { input.value = q; chat({ preventDefault: function () {}, stopPropagation: function () {} }); },
     name: myName
   };

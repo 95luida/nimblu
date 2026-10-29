@@ -14,7 +14,7 @@ Nimblu è una mascotte (un axolotl) che cammina sulle pagine che visiti. Quando 
 
 ## Il controllo della pagina
 
-Clicca Nimblu → **🔍 Controlla la pagina**. Si apre un pannello con cinque schede (UX, SEO, GEO, AEO e Non vedenti), ognuna con il suo voto da 0 a 100 e le barre per categoria. In cima scegli se controllare la pagina com’è sul **🖥 computer** o sul **📱 telefono**. Le regole sono più di 100, fisse, e girano tutte nel browser (la scheda GEO legge anche `robots.txt` e `llms.txt` del sito).
+Clicca Nimblu → **🔍 Controlla la pagina** (oppure usa i bottoni in cima al pannellino dell’icona dell’estensione). Si apre un pannello con cinque schede (UX, SEO, GEO, AEO e Non vedenti), ognuna con il suo voto da 0 a 100 e le barre per categoria. In cima scegli se controllare la pagina com’è sul **🖥 computer** o sul **📱 telefono**. Le regole sono più di 100, fisse, e girano tutte nel browser (la scheda GEO legge anche `robots.txt` e `llms.txt` del sito).
 
 | UX e conversione | SEO | Non vedenti |
 |---|---|---|
@@ -99,6 +99,7 @@ Su Chrome 138 o successivo Nimblu può usare **Gemini Nano**, il modello integra
 
 - **Non rovina le pagine di lavoro:** negli editor (WordPress, Elementor, Divi, Webflow, Google Docs, Canva, ActiveCampaign e altri) e nei campi di testo le funzioni che toccano la pagina sono spente.
 - **Si fa da parte:** «Nascondi su questo sito», modalità Calmo o Angolo, chiacchiere e consigli automatici da spegnere.
+- **I controlli anche senza mascotte:** dall’icona dell’estensione, **🔍 Controlla la pagina** e **📱 Controlla come si vede da telefono** aprono il pannello anche dove Nimblu è nascosto o spento; chiuso il pannello, la pagina torna pulita.
 - **Barra di WordPress:** quando sei loggato può togliere la barra nera dall’anteprima del sito, e la rimette quando glielo chiedi.
 - **Tutto resta sul computer:** impostazioni, memoria e cronologia della chat sono salvate in Chrome.
 

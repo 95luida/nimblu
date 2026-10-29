@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Nimblu",
-  "version": "3.17.0",
+  "version": "1.0",
   "description": "Nimblu vive sulle pagine: controlla UX, SEO, GEO, AEO e accessibilità, anche da telefono, mangia lettere e fa a botte con l'omino.",
   "permissions": [
     "storage",

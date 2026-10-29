@@ -6,7 +6,9 @@
   var lastSave = 0;
   function apply(s) {
     var off = s.enabled === false || (s.disabledHosts || []).indexOf(host) >= 0;
-    if (off) { if (window.__mascot) window.__mascot.stop(); return; }
+    if (off) { if (window.__mascot && !window.__mascot.panelOnly) window.__mascot.stop(); return; }
+    // riacceso mentre c'era solo il pannello dei controlli: lascia il posto al Nimblu vero
+    if (window.__mascot && window.__mascot.panelOnly) window.__mascot.stop();
     if (!window.__mascot) {
       var st = s.nimbluState && Date.now() - s.nimbluState.t < MAX_AGE ? s.nimbluState : null;
       window.__MASCOT_SRC({
@@ -62,6 +64,13 @@
   }
   // comandi dal pannellino dell'estensione (es. "Fai entrare l'omino")
   chrome.runtime.onMessage.addListener(function (m, sender, reply) {
+    // controllo della pagina dall'icona: se Nimblu qui è nascosto o spento si apre solo il pannello, senza mascotte
+    if (m && m.type === 'nimblu-check') {
+      if (!window.__mascot) window.__MASCOT_SRC({ persistent: true, panelOnly: true, talk: false, uxAuto: false, noEat: true, aiPage: false });
+      if (window.__mascot && window.__mascot.check) window.__mascot.check(!!m.mobile);
+      reply({ ok: !!window.__mascot });
+      return;
+    }
     if (!m || m.type !== 'nimblu-act') return;
     var ok = !!(window.__mascot && window.__mascot.act);
     if (ok) window.__mascot.act(m.act);

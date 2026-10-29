@@ -13,7 +13,8 @@
   h2 { margin:14px 0 6px; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
   header p { margin:0; color:var(--muted); font-size:12px; }
   label.row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:9px 0; border-top:1px solid var(--line); cursor:pointer; }
-  .row span small { display:block; color:var(--muted); font-size:11px; word-break:break-all; }
+  .row span small { display:block; color:var(--muted); font-size:11px; }
+  #host { word-break:break-all; }
   input[type=checkbox] { appearance:none; flex:none; width:36px; height:20px; border-radius:999px; background:var(--off); position:relative; cursor:pointer; transition:background .15s; margin:0; }
   input[type=checkbox]::after { content:""; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:#fff; transition:transform .15s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
   input[type=checkbox]:checked { background:var(--on); }
@@ -28,6 +29,10 @@
   button:focus-visible { outline:2px solid var(--on); outline-offset:2px; }
   .primary { background:var(--on); color:#fff; margin-top:8px; width:100%; }
   .primary:disabled { opacity:.6; cursor:default; }
+  .check { margin:0 0 6px; text-align:left; padding:10px 12px; font-size:12.5px; }
+  .check.mob { background:#2d3e63; }
+  .check:hover { filter:brightness(1.08); }
+  #checkNote { margin:2px 0 6px; }
   .fight { background:#fde4e4; color:#8a1c24; margin:4px 0 2px; }
   .fight:hover { background:#f9cfcf; }
   #fightNote { margin:4px 0 0; }
@@ -47,13 +52,17 @@
     <div><h1>Nimblu</h1><p>La creatura del laghetto delle tue pagine</p></div>
   </header>
 
+  <button class="primary check" id="check">🔍 Controlla la pagina: UX, SEO, GEO, AEO e non vedenti</button>
+  <button class="primary check mob" id="checkMob">📱 Controlla come si vede da telefono</button>
+  <p class="empty" id="checkNote" hidden></p>
+
   <label class="row" for="on"><span>Attivo su tutti i siti</span><input type="checkbox" id="on"></label>
   <label class="row" for="talk"><span>Chiacchiere<small>Frasi che dice di sua iniziativa</small></span><input type="checkbox" id="talk"></label>
   <label class="row" for="ux"><span>Consigli UX automatici<small>Ogni tanto segnala problemi della pagina</small></span><input type="checkbox" id="ux"></label>
   <label class="row" for="noEat"><span>Non mangiare le lettere<small>Rimette quelle mangiate e non ne tocca più, su tutti i siti</small></span><input type="checkbox" id="noEat"></label>
   <label class="row" for="noGlass"><span>Non saltare sullo schermo<small>Nelle corse pazze non si tuffa più verso di te contro il vetro</small></span><input type="checkbox" id="noGlass"></label>
   <label class="row" for="wpAuto"><span>Spacca la barra di WordPress<small>La toglie da solo su ogni pagina; per rimetterla scrivigli "rimetti la barra"</small></span><input type="checkbox" id="wpAuto"></label>
-  <label class="row" id="siteRow" for="site"><span>Nascondi su questo sito<small id="host"></small></span><input type="checkbox" id="site"></label>
+  <label class="row" id="siteRow" for="site"><span>Nascondi su questo sito<small id="host"></small><small>I controlli restano qui sopra</small></span><input type="checkbox" id="site"></label>
   <button class="primary fight" id="fight">🥊 Fai entrare l'omino</button>
   <p class="empty" id="fightNote" hidden></p>
 
@@ -73,7 +82,7 @@
   <div class="memhead"><h2>Cronologia della chat</h2><button class="ghost" id="logClear" hidden>Cancella</button></div>
   <p class="empty" id="logInfo">Ancora nessun messaggio.</p>
 
-  <p id="note">Sulla pagina, clicca Nimblu per il menu, la chat e il controllo UX.</p>
+  <p id="note">Sulla pagina, clicca Nimblu per il menu e la chat. Se lo nascondi o lo spegni, i controlli della pagina restano qui sopra.</p>
   <script src="ai-core.js"></script>
   <script src="popup.js"></script>
 </body>
