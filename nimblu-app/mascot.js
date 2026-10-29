@@ -5110,6 +5110,14 @@ window.__MASCOT_SRC = function (opts) {
     return t.length > 40 ? t.slice(0, 40) + '…' : t;
   }
   function fileName(u) { try { return decodeURIComponent(new URL(u).pathname.split('/').pop()) || u; } catch (e) { return u; } }
+  // l'elemento (o un suo contenitore) è fissato allo schermo: position fixed o sticky
+  function pinned(el) {
+    for (var e = el; e && e.nodeType === 1 && e !== document.body; e = e.parentElement) {
+      var p = getComputedStyle(e).position;
+      if (p === 'fixed' || p === 'sticky') return true;
+    }
+    return false;
+  }
 
   function audit() {
     var out = [];
@@ -5148,7 +5156,9 @@ window.__MASCOT_SRC = function (opts) {
         var filled = parseColor(cs.backgroundColor);
         if (lb && (CTA_RE.test(lb) || (isBtn && filled && filled.a > 0.5))) {
           ctas.push(el);
-          if (r.top + sy < vh) ctasFold.push(el);
+          // dentro un header fisso o sticky il bottone resta sempre in cima: conta dove si vede adesso,
+          // non la posizione + lo scroll (altrimenti con la pagina già scrollata finisce «sotto la piega»)
+          if (pinned(el) ? r.top < vh && r.bottom > 0 : r.top + sy < vh) ctasFold.push(el);
           if (GENERIC_RE.test(lb)) genericCta.push(el);
         }
       }
