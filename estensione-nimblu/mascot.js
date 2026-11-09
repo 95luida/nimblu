@@ -156,7 +156,7 @@ window.__MASCOT_SRC = function (opts) {
     '<button type="button" data-a="hide">🙈 Nasconditi</button><button type="button" data-a="peek">👀 Sbircia</button><button type="button" data-a="climb">🧗 Arrampica</button>' +
     '<button type="button" data-a="zoom" title="Corsa pazza, come i gatti">🏃 Corri!</button><button type="button" data-a="ball" title="Una pallina da lanciargli">🎾 Pallina</button><button type="button" class="fightb" data-a="fight" title="Fai entrare l\'omino del jetpack">🥊 Omino</button>' +
     '</div>' +
-    '<div class="uxr"><button type="button" class="uxb" data-a="ux">🔍 Controlla la pagina: UX, SEO, GEO, AEO e non vedenti</button><button type="button" class="uxb uxm" data-a="uxmob" title="Gli stessi controlli sulla pagina larga 390 px, come su un iPhone">📱 Controlla come si vede da telefono</button></div>' +
+    '<div class="uxr"><button type="button" class="uxb" data-a="ux">🔍 Controlla la pagina: UX, SEO, velocità, GEO, AEO e non vedenti</button><button type="button" class="uxb uxm" data-a="uxmob" title="Gli stessi controlli sulla pagina larga 390 px, come su un iPhone">📱 Controlla come si vede da telefono</button></div>' +
     '<form><input type="text" maxlength="200" placeholder="Scrivi a Nimblu…" aria-label="Messaggio per Nimblu"><button type="submit">Invia</button><button type="button" class="hist" data-a="hist" title="Cronologia della chat" aria-label="Cronologia della chat">🕘</button></form>' +
     '<div class="row"><button type="button" class="bye" data-a="spit">↩️ Ridai le lettere</button><button type="button" class="bye" data-a="bye">👋 ' + (opts.persistent ? 'Nascondi' : 'Chiudi') + '</button></div>';
   var bubble = mk('div');
@@ -3655,7 +3655,7 @@ window.__MASCOT_SRC = function (opts) {
     // durante la rissa: "basta" o le mosse di Nimblu
     if (F) { var fr = fightChat(q); if (fr) { say(fr); logMsg('nimblu', fr); return; } }
     // comandi che devono funzionare sempre, anche senza AI
-    if (opts.ai && !FIGHT_Q.test(q) && !/pallina|\bpalla\b|lanciamela|corri\b|corsa pazza|zoomies|scatenat|zitto|silenzio|basta parlare|non parlare|^parla|chiacchier|ridai|restituisci|sputa|non mangiare|smetti di mangiare|torna a mangiare|puoi mangiare|barra|cronologia|non vedent|ciech|cieco|ipovedent|screen ?reader|\bgeo\b|\baeo\b|llms\.txt|\breport\b/i.test(q) && !MOB_Q.test(q)) { askAi(q, force); return; }
+    if (opts.ai && !FIGHT_Q.test(q) && !/pallina|\bpalla\b|lanciamela|corri\b|corsa pazza|zoomies|scatenat|zitto|silenzio|basta parlare|non parlare|^parla|chiacchier|ridai|restituisci|sputa|non mangiare|smetti di mangiare|torna a mangiare|puoi mangiare|barra|cronologia|non vedent|ciech|cieco|ipovedent|screen ?reader|\bgeo\b|\baeo\b|llms\.txt|\breport\b|pagespeed|lighthouse|web vitals/i.test(q) && !MOB_Q.test(q)) { askAi(q, force); return; }
     say('...');
     M.reply = { q: q, t: 30 };
   }
@@ -3828,6 +3828,7 @@ window.__MASCOT_SRC = function (opts) {
       [/in piedi|alzati|due zampe/, function () { later(standUp, 500); return 'Guarda, sto in piedi!'; }],
       [/siedi|seduto|a cuccia/, function () { later(function () { front(0); }, 500); return 'Mi siedo qui.'; }],
       [/gira|giro|coda/, function () { later(function () { turn(null, 3); }, 500); return 'Wiii!'; }],
+      [/velocit|veloce|lent[ao]\b|pagespeed|page speed|lighthouse|core web vitals|web vitals|\blcp\b|\bcls\b|\binp\b|\bttfb\b/, function () { later(function () { openUx(false, 'perf'); }, 400); return 'Misuro la velocità della pagina... ⚡'; }],
       [/\bseo\b|meta ?description|parole chiave|keyword|indicizz|posizionament|google/, function () { later(function () { openUx(false, 'seo'); }, 400); return 'Guardo la SEO della pagina... 🔎'; }],
       [/\bux\b|controll|analizz|conversion|usabilit|errori|problemi/, function () { later(function () { openUx(false, 'ux'); }, 400); return 'Do un\'occhiata alla pagina...'; }],
       [/zitto|silenzio|basta parlare|non parlare/, function () { setPref('talk', false); savePrefs(); return 'Ok, sto zitto. Parlo solo se mi chiami.'; }],
@@ -5055,9 +5056,13 @@ window.__MASCOT_SRC = function (opts) {
   // indirizzi scaricati da Nimblu stesso (GEO, vista telefono): un loro 404 non è un errore della pagina
   var ownReq = {};
   try {
-    new PerformanceObserver(function (l) { var e = l.getEntries(); if (e.length) ux.lcp = e[e.length - 1].startTime; }).observe({ type: 'largest-contentful-paint', buffered: true });
+    new PerformanceObserver(function (l) { var e = l.getEntries(); if (e.length) { var x = e[e.length - 1]; ux.lcp = x.startTime; perfObs.lcpEl = x.element || perfObs.lcpEl; perfObs.lcpUrl = x.url || ''; } }).observe({ type: 'largest-contentful-paint', buffered: true });
     new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { if (!e.hadRecentInput) ux.cls += e.value; }); }).observe({ type: 'layout-shift', buffered: true });
   } catch (e) {}
+  // per la scheda Velocità: elemento LCP, risposta ai clic (INP) e blocchi del thread principale (long animation frame)
+  var perfObs = { lcpEl: null, lcpUrl: '', inp: 0, inpN: 0, ids: {}, loaf: [], loafOk: false };
+  try { new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { if (!e.interactionId) return; if (!perfObs.ids[e.interactionId]) { perfObs.ids[e.interactionId] = 1; perfObs.inpN++; } if (e.duration > perfObs.inp) perfObs.inp = e.duration; }); }).observe({ type: 'event', durationThreshold: 40, buffered: true }); } catch (e) {}
+  try { new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { if (perfObs.loaf.length < 400) perfObs.loaf.push([e.startTime, e.blockingDuration || 0]); }); }).observe({ type: 'long-animation-frame', buffered: true }); perfObs.loafOk = true; } catch (e) {}
   function onResErr(e) { var t = e.target; if (t && t.tagName && /^(IMG|SCRIPT|LINK|VIDEO|SOURCE|IFRAME)$/.test(t.tagName)) ux.failed.push(t); }
   document.addEventListener('error', onResErr, true);
 
@@ -5299,7 +5304,8 @@ window.__MASCOT_SRC = function (opts) {
     seo: [['Google', '🔎'], ['Titoli', '🔠'], ['Testi', '📝'], ['Immagini e link', '🖼️'], ['Tecnica', '⚙️'], ['Social e dati', '🔗']],
     a11y: [['Immagini', '🖼️'], ['Link e bottoni', '🔗'], ['Moduli', '📝'], ['Struttura', '🧭'], ['Video e frame', '🎬'], ['Tastiera', '⌨️']],
     geo: [['Accesso AI', '🤖'], ['Risposte', '💬'], ['Fiducia', '🏅'], ['Dati strutturati', '🧩']],
-    aeo: [['Risposte brevi', '🎯'], ['Domande', '❓'], ['Formati', '📋'], ['Voce e schema', '🔊']]
+    aeo: [['Risposte brevi', '🎯'], ['Domande', '❓'], ['Formati', '📋'], ['Voce e schema', '🔊']],
+    perf: [['Metriche', '⏱️'], ['Immagini', '🖼️'], ['Codice e caricamento', '📦'], ['Rete e server', '🌐']]
   };
   function scoreOf(list, cat) {
     var tot = 0, got = 0;
@@ -5314,8 +5320,8 @@ window.__MASCOT_SRC = function (opts) {
       .map(function (c) { return { name: c[0], icon: c[1], sc: scoreOf(list, c[0]) }; });
   }
   function uxScore() { return scoreOf(ux.list); }
-  function tabList(tab) { return (tab === 'seo' ? seo.list : tab === 'a11y' ? a11y.list : tab === 'geo' ? geo.list : tab === 'aeo' ? aeo.list : ux.list) || []; }
-  function curTab() { return /^(seo|a11y|geo|aeo)$/.test(ux.tab) ? ux.tab : 'ux'; }
+  function tabList(tab) { return (tab === 'seo' ? seo.list : tab === 'a11y' ? a11y.list : tab === 'geo' ? geo.list : tab === 'aeo' ? aeo.list : tab === 'perf' ? perf.list : ux.list) || []; }
+  function curTab() { return /^(seo|a11y|geo|aeo|perf)$/.test(ux.tab) ? ux.tab : 'ux'; }
 
   // ---------- controllo SEO ----------
   // Regole fisse (niente IA) su quello che leggono i motori di ricerca: titolo e meta description (con l'anteprima del
@@ -6342,6 +6348,230 @@ window.__MASCOT_SRC = function (opts) {
   }
 
   // pannello del report
+  // ---------- velocità (come PageSpeed) ----------
+  // Due fonti nella stessa scheda. 1) Misure fatte qui, sul caricamento vero della pagina in questo browser (niente esce
+  // dal computer): metriche Core Web Vitals dalle API del browser e i controlli tipici di Lighthouse ricavati da Resource
+  // Timing e dal DOM (risorse che bloccano, immagini, compressione, pesi, DOM, siti esterni, HTTP/2, redirect, preconnect).
+  // Dei file di altri siti il browser non dà il peso (manca Timing-Allow-Origin): i totali contano solo quelli leggibili.
+  // 2) PageSpeed Insights di Google, a richiesta: passa dall'estensione (opts.psi) con la chiave API dell'utente.
+  var perf = { list: null, psi: {}, psiState: {}, psiErr: {}, strategy: 'mobile' };
+  function perfScore() { return scoreOf(perf.list); }
+  function secs(ms) { return (ms / 1000).toFixed(1).replace('.', ',') + ' s'; }
+  function kb(b) { return b >= 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.round(b / 1024) + ' KB'; }
+  function perfAudit() {
+    var out = [], cur = { cat: 'Metriche', w: 5 };
+    function chk(cat, w) { cur = { cat: cat, w: w }; }
+    function add(sev, title, detail, els, p) { out.push({ sev: sev, title: title, detail: detail, els: (els || []).filter(Boolean), cat: cur.cat, w: cur.w, p: p != null ? clamp(p, 0, 1) : PTS[sev] }); }
+    // tre fasce come Google: buono / da migliorare / scarso
+    function band(v, good, poor) { return v <= good ? 'ok' : v <= poor ? 'warn' : 'error'; }
+    var nav = null, res = [];
+    try { nav = performance.getEntriesByType('navigation')[0] || null; } catch (e) {}
+    try { res = performance.getEntriesByType('resource').filter(function (e) { return !ownReq[e.name] && /^https?:/.test(e.name); }); } catch (e) {}
+    var fcp = 0;
+    try { fcp = (performance.getEntriesByName('first-contentful-paint')[0] || {}).startTime || 0; } catch (e) {}
+    var ttfb = nav ? Math.max(0, nav.responseStart - (nav.activationStart || 0)) : 0;
+    var site = function (h) { return h.split('.').slice(-2).join('.'); }, mySite = site(location.hostname);
+    var host = function (u) { try { return new URL(u).hostname; } catch (e) { return ''; } };
+    var third = res.filter(function (e) { var h = host(e.name); return h && site(h) !== mySite; });
+    var size = function (e) { return e.transferSize || e.encodedBodySize || 0; };
+    var names = function (L, n) { return L.slice(0, n || 3).map(function (e) { return fileName(e.name) + (size(e) ? ' (' + kb(size(e)) + ')' : ''); }).join(', ') + (L.length > (n || 3) ? ' e altri ' + (L.length - (n || 3)) : ''); };
+    var where = AV.mobile ? ' Misurato al caricamento su questo computer: dal telefono di solito è più lento.' : '';
+
+    // --- metriche (Core Web Vitals e dintorni) ---
+    chk('Metriche', 15);
+    if (ux.lcp) { var s1 = band(ux.lcp, 2500, 4000); add(s1, s1 === 'ok' ? 'Contenuto principale veloce (LCP ' + secs(ux.lcp) + ')' : 'Il contenuto principale arriva tardi (LCP ' + secs(ux.lcp) + ')', (s1 === 'ok' ? 'Bene sotto 2,5 s.' : 'Bene sotto 2,5 s: alleggerisci e anticipa l\'elemento più grande in alto (di solito l\'immagine principale), con fetchpriority="high" e senza loading="lazy".') + (perfObs.lcpEl ? ' L\'elemento è ' + elDesc(perfObs.lcpEl) + '.' : '') + where, [perfObs.lcpEl], s1 === 'warn' ? 0.5 : null); }
+    chk('Metriche', 10);
+    var s2 = band(ux.cls, 0.1, 0.25); add(s2, s2 === 'ok' ? 'Pagina stabile (CLS ' + ux.cls.toFixed(2).replace('.', ',') + ')' : 'La pagina si sposta mentre carica (CLS ' + ux.cls.toFixed(2).replace('.', ',') + ')', s2 === 'ok' ? 'Bene sotto 0,1.' : 'Bene sotto 0,1: dai larghezza e altezza a immagini, video e banner, e non inserire contenuti sopra quelli già visibili.', null, s2 === 'warn' ? 0.5 : null);
+    chk('Metriche', 8);
+    if (fcp) { var s3 = band(fcp, 1800, 3000); add(s3, (s3 === 'ok' ? 'Primo contenuto veloce' : 'Il primo contenuto compare tardi') + ' (FCP ' + secs(fcp) + ')', (s3 === 'ok' ? 'Bene sotto 1,8 s.' : 'Bene sotto 1,8 s: meno CSS e JavaScript che bloccano il disegno, server più rapido.') + where, null, s3 === 'warn' ? 0.5 : null); }
+    chk('Metriche', 8);
+    if (ttfb) { var s4 = band(ttfb, 800, 1800); add(s4, (s4 === 'ok' ? 'Il server risponde subito' : 'Il server risponde lento') + ' (TTFB ' + secs(ttfb) + ')', s4 === 'ok' ? 'Bene sotto 0,8 s.' : 'Bene sotto 0,8 s: attiva la cache di pagina (es. WP Rocket, LiteSpeed, cache di Kinsta) e controlla plugin e hosting.', null, s4 === 'warn' ? 0.5 : null); }
+    chk('Metriche', 8);
+    if (perfObs.loafOk) {
+      var end = nav && nav.loadEventEnd ? nav.loadEventEnd + 5000 : 15000, tbt = perfObs.loaf.reduce(function (s, x) { return x[0] < end ? s + x[1] : s; }, 0), s5 = band(tbt, 200, 600);
+      add(s5, (s5 === 'ok' ? 'Pagina pronta a rispondere' : 'Il JavaScript tiene occupato il browser') + ' (blocchi ' + Math.round(tbt) + ' ms)', (s5 === 'ok' ? 'Pochi blocchi del thread principale durante il caricamento (Google vuole sotto 200 ms).' : 'Durante il caricamento il browser resta bloccato ' + Math.round(tbt) + ' ms (bene sotto 200): rimanda gli script non essenziali con defer, togli plugin e widget che non servono.') + where, null, s5 === 'warn' ? 0.5 : null);
+    }
+    chk('Metriche', 6);
+    if (perfObs.inpN) { var s6 = band(perfObs.inp, 200, 500); add(s6, (s6 === 'ok' ? 'Risponde subito ai clic' : 'Risponde lento ai clic') + ' (INP ' + Math.round(perfObs.inp) + ' ms)', 'Misurato sui clic e i tasti premuti finora (' + perfObs.inpN + '). Bene sotto 200 ms.' + (s6 === 'ok' ? '' : ' Spezza il lavoro degli script lunghi e alleggerisci quello che parte al clic.'), null, s6 === 'warn' ? 0.5 : null); }
+
+    // --- immagini ---
+    var imgs = [].filter.call(document.images, function (im) { return !uxOurs(im) && im.naturalWidth > 0 && im.getBoundingClientRect().width > 40; });
+    var resOf = function (im) { var u = im.currentSrc || im.src; for (var i = 0; i < res.length; i++) if (res[i].name === u) return res[i]; return null; };
+    var dpr = AV.mobile ? 3 : Math.max(1, window.devicePixelRatio || 1);
+    var big = imgs.filter(function (im) { var w = im.getBoundingClientRect().width * dpr; return im.naturalWidth > 600 && im.naturalWidth > w * 1.5; });
+    chk('Immagini', 8);
+    if (big.length) { var save = big.reduce(function (s, im) { var r = resOf(im), w = im.getBoundingClientRect().width * dpr; return s + (r && size(r) ? size(r) * (1 - Math.pow(w / im.naturalWidth, 2)) : 0); }, 0); add('warn', big.length + (big.length === 1 ? ' immagine più grande' : ' immagini più grandi') + ' del necessario', 'Es. ' + fileName(big[0].currentSrc || big[0].src) + ' è larga ' + big[0].naturalWidth + ' px ma si vede a ' + Math.round(big[0].getBoundingClientRect().width) + ' px' + (AV.mobile ? ' sul telefono' : '') + ': usa srcset o una versione ridimensionata.' + (save > 20480 ? ' Risparmio stimato: ' + kb(save) + '.' : ''), big, Math.max(0.15, 0.7 - big.length * 0.06)); }
+    else if (imgs.length) add('ok', 'Immagini della misura giusta', 'Nessuna immagine molto più grande di come si vede.');
+    var old = imgs.filter(function (im) { return /\.(jpe?g|png|gif|bmp)(\?|#|$)/i.test(im.currentSrc || im.src); });
+    chk('Immagini', 6);
+    if (old.length) add(old.length > 3 ? 'warn' : 'tip', old.length + (old.length === 1 ? ' immagine in JPG o PNG' : ' immagini in JPG, PNG o GIF'), 'WebP e AVIF pesano il 25-50% in meno a parità di qualità: convertile (in WordPress basta un plugin come Converter for Media o la conversione di Imagify). Es. ' + fileName(old[0].currentSrc || old[0].src) + '.', old, Math.max(0.2, 0.75 - old.length * 0.04));
+    else if (imgs.length) add('ok', 'Immagini in formato moderno', 'WebP, AVIF o SVG.');
+    var vh = AV.h, sy = AV.sy;
+    var eager = imgs.filter(function (im) { return im.getBoundingClientRect().top + sy > vh * 1.5 && im.loading !== 'lazy' && im !== perfObs.lcpEl; });
+    chk('Immagini', 5);
+    if (eager.length) add('tip', eager.length + (eager.length === 1 ? ' immagine lontana caricata subito' : ' immagini lontane caricate subito'), 'Sono sotto la prima schermata ma si scaricano all\'apertura: aggiungi loading="lazy", così il browser le prende solo quando servono.', eager, Math.max(0.3, 0.8 - eager.length * 0.03));
+    else if (imgs.length) add('ok', 'Immagini lontane in lazy loading', 'Si caricano solo quando servono.');
+    // l'immagine principale (LCP): solo se è una foto vera e occupa una parte importante della prima schermata
+    var le = perfObs.lcpEl && perfObs.lcpEl.tagName === 'IMG' && !/\.svg(\?|$)/i.test(perfObs.lcpEl.currentSrc || perfObs.lcpEl.src) && (function (r) { return r.width * r.height > innerWidth * innerHeight * 0.08; })(perfObs.lcpEl.getBoundingClientRect()) ? perfObs.lcpEl : null;
+    chk('Immagini', 6);
+    if (le && le.loading === 'lazy') add('warn', 'L\'immagine principale è in lazy loading', 'È l\'elemento più grande della prima schermata (LCP) ma ha loading="lazy": il browser la scarica per ultima. Toglilo e aggiungi fetchpriority="high".', [le], 0.2);
+    else if (le && le.getAttribute('fetchpriority') !== 'high') add('tip', 'Dai la precedenza all\'immagine principale', 'Aggiungi fetchpriority="high" a ' + fileName(le.currentSrc || le.src) + ': è l\'elemento più grande della prima schermata (LCP) e così arriva prima.', [le], 0.6);
+    else if (le) add('ok', 'Immagine principale con la precedenza', 'Ha fetchpriority="high" e niente lazy loading.', [le]);
+    var nodim = imgs.filter(function (im) { return !im.hasAttribute('width') || !im.hasAttribute('height'); });
+    chk('Immagini', 4);
+    if (nodim.length) add('tip', nodim.length + (nodim.length === 1 ? ' immagine senza misure' : ' immagini senza misure'), 'Senza width e height il browser non sa quanto spazio tenerle e la pagina «salta» quando arrivano (CLS).', nodim, Math.max(0.3, 0.8 - nodim.length * 0.04));
+    else if (imgs.length) add('ok', 'Immagini con larghezza e altezza', 'Lo spazio è riservato prima che arrivino.');
+    var heavy = res.filter(function (e) { return /^(img|css|image)$/.test(e.initiatorType) && /\.(jpe?g|png|gif|webp|avif|bmp)(\?|$)/i.test(e.name) && size(e) > 200 * 1024; }).sort(function (a, b) { return size(b) - size(a); });
+    chk('Immagini', 6);
+    if (heavy.length) add('warn', heavy.length + (heavy.length === 1 ? ' immagine pesa più di 200 KB' : ' immagini pesano più di 200 KB'), names(heavy) + (heavy.every(function (e) { return /\.(webp|avif)(\?|$)/i.test(e.name); }) ? ': riducine le dimensioni o la qualità (Squoosh): per lo schermo bastano 1600-2000 px di larghezza.' : ': comprimile (Squoosh, TinyPNG) e usa WebP o AVIF.'), null, Math.max(0.15, 0.6 - heavy.length * 0.06));
+    else if (res.length) add('ok', 'Nessuna immagine pesante', 'Tutte sotto i 200 KB.');
+
+    // --- codice e caricamento ---
+    var hasRB = res.some(function (e) { return 'renderBlockingStatus' in e; });
+    var blocking = hasRB ? res.filter(function (e) { return e.renderBlockingStatus === 'blocking'; }) : [];
+    if (!hasRB) [].forEach.call(document.querySelectorAll('head link[rel=stylesheet]:not([media=print]),head script[src]:not([async]):not([defer]):not([type=module])'), function (x) { blocking.push({ name: x.href || x.src, initiatorType: x.tagName === 'LINK' ? 'link' : 'script', transferSize: 0 }); });
+    var bJs = blocking.filter(function (e) { return /\.js(\?|$)/i.test(e.name) || e.initiatorType === 'script'; });
+    chk('Codice e caricamento', 10);
+    if (bJs.length || blocking.length > 3) add(bJs.length ? 'warn' : 'tip', blocking.length + (blocking.length === 1 ? ' file blocca' : ' file bloccano') + ' il primo disegno', (bJs.length ? bJs.length + ' script senza defer o async nell\'head: aggiungi defer. ' : '') + 'Il browser aspetta questi file prima di mostrare la pagina: ' + names(blocking) + '. Carica il CSS critico subito e il resto dopo (in WordPress: WP Rocket, Autoptimize, LiteSpeed).', null, bJs.length ? Math.max(0.15, 0.5 - bJs.length * 0.05) : 0.6);
+    else add('ok', blocking.length ? 'Pochi file bloccano il primo disegno' : 'Nessun file blocca il primo disegno', blocking.length ? names(blocking) + '.' : 'CSS e script non fermano il rendering.');
+    var txt = res.concat(nav ? [nav] : []).filter(function (e) { return e.encodedBodySize > 2048 && e.decodedBodySize > 0 && e.encodedBodySize >= e.decodedBodySize * 0.95 && (/^(navigation|script|link|css|xmlhttprequest|fetch)$/.test(e.initiatorType || e.entryType) || /\.(js|css|json|svg|html?)(\?|$)/i.test(e.name)) && !/\.(woff2?|png|jpe?g|webp|avif|gif)(\?|$)/i.test(e.name); });
+    chk('Codice e caricamento', 6);
+    if (txt.length) add('warn', txt.length + (txt.length === 1 ? ' file di testo non compresso' : ' file di testo non compressi'), names(txt) + ': attiva gzip o Brotli sul server (di solito una spunta nell\'hosting o nel plugin di cache), pesano 3-5 volte meno.', null, Math.max(0.2, 0.6 - txt.length * 0.05));
+    else add('ok', 'File di testo compressi', 'HTML, CSS e JavaScript arrivano compressi.');
+    var all = res.concat(nav ? [nav] : []), known = all.filter(function (e) { return size(e) > 0; }), tot = known.reduce(function (s, e) { return s + size(e); }, 0), unknown = all.length - known.length;
+    chk('Codice e caricamento', 6);
+    var note = unknown ? ' (' + unknown + ' file di altri siti non dicono il peso: il totale vero è più alto)' : '';
+    if (tot > 3 * 1048576) add('warn', 'Pagina pesante: ' + kb(tot), 'Il browser ha scaricato ' + kb(tot) + note + '. Google consiglia di stare sotto 1,6 MB: comprimi immagini e video e togli gli script che non servono.', null, tot > 6 * 1048576 ? 0.1 : 0.4);
+    else if (tot > 1.6 * 1048576) add('tip', 'Pagina un po\' pesante: ' + kb(tot), 'Scaricati ' + kb(tot) + note + '; meglio sotto 1,6 MB.', null, 0.65);
+    else add('ok', 'Pagina leggera: ' + kb(tot), 'Scaricati ' + kb(tot) + note + '.');
+    var js = all.filter(function (e) { return e.initiatorType === 'script' || /\.js(\?|$)/i.test(e.name); }), jsTot = js.reduce(function (s, e) { return s + size(e); }, 0);
+    chk('Codice e caricamento', 6);
+    if (jsTot > 500 * 1024) add(jsTot > 1048576 ? 'warn' : 'tip', 'Tanto JavaScript: ' + kb(jsTot), js.length + ' script; i più grandi: ' + names(js.slice().sort(function (a, b) { return size(b) - size(a); })) + '. Ogni KB di JavaScript va anche eseguito: togli i plugin e i widget che non usi.', null, jsTot > 1048576 ? 0.3 : 0.65);
+    else add('ok', 'JavaScript contenuto: ' + kb(jsTot), js.length + ' script.');
+    chk('Codice e caricamento', 3);
+    if (all.length > 100) add('tip', all.length + ' richieste', 'Ogni file è una richiesta in più: unisci CSS e script piccoli, usa sprite o SVG in linea per le icone.', null, 0.6);
+    else add('ok', all.length + ' richieste', 'Un numero ragionevole di file.');
+    var dom = document.getElementsByTagName('*').length;
+    chk('Codice e caricamento', 5);
+    if (dom > 1500) add(dom > 3000 ? 'warn' : 'tip', 'Pagina con ' + dom + ' elementi HTML', 'Google consiglia di stare sotto i 1.400: con tanti elementi il browser impiega di più a disegnare e a rispondere. Succede spesso con i page builder: semplifica sezioni e colonne annidate.', null, dom > 3000 ? 0.3 : 0.6);
+    else add('ok', dom + ' elementi HTML', 'Struttura snella.');
+    var fonts = res.filter(function (e) { return /\.(woff2?|ttf|otf|eot)(\?|$)/i.test(e.name); }), noSwap = 0;
+    try { [].forEach.call(document.styleSheets, function (sh) { var rules; try { rules = sh.cssRules; } catch (e) { return; } [].forEach.call(rules || [], function (r) { if (r.type === 5 && !/swap|optional|fallback/.test(r.style.getPropertyValue('font-display'))) noSwap++; }); }); } catch (e) {}
+    chk('Codice e caricamento', 3);
+    if (fonts.length > 6 || noSwap) add('tip', fonts.length + ' file di caratteri' + (noSwap ? ', ' + noSwap + ' senza font-display' : ''), (fonts.length > 6 ? 'Tanti pesi e stili da scaricare: tieni solo quelli che usi. ' : '') + (noSwap ? 'Aggiungi font-display: swap alle @font-face, così il testo si vede subito con un carattere di riserva.' : ''), null, 0.6);
+    else add('ok', 'Caratteri sotto controllo', fonts.length + ' file di caratteri.');
+
+    // --- rete e server ---
+    var origins = {};
+    third.forEach(function (e) { var h = host(e.name); origins[h] = (origins[h] || 0) + 1; });
+    var oL = Object.keys(origins).sort(function (a, b) { return origins[b] - origins[a]; });
+    chk('Rete e server', 4);
+    if (oL.length > 8) add('tip', 'File da ' + oL.length + ' siti esterni', 'I più usati: ' + oL.slice(0, 5).map(function (h) { return h + ' (' + origins[h] + ')'; }).join(', ') + '. Ogni sito in più costa una connessione: togli i servizi che non usi.', null, 0.6);
+    else add('ok', oL.length ? 'Pochi siti esterni (' + oL.length + ')' : 'Nessun sito esterno', oL.slice(0, 5).join(', ') || 'Tutto dallo stesso sito.');
+    var h1x = res.filter(function (e) { return e.nextHopProtocol === 'http/1.1' && site(host(e.name)) === mySite; });
+    if (nav && nav.nextHopProtocol === 'http/1.1') h1x.unshift(nav);
+    chk('Rete e server', 4);
+    if (h1x.length) add('tip', 'Il sito usa ancora HTTP/1.1', h1x.length + ' file dal tuo server arrivano con HTTP/1.1: con HTTP/2 o HTTP/3 (di solito si attiva dall\'hosting) i file viaggiano in parallelo.', null, 0.5);
+    else if (nav && nav.nextHopProtocol) add('ok', 'Protocollo moderno (' + nav.nextHopProtocol.toUpperCase().replace('H2', 'HTTP/2').replace('H3', 'HTTP/3') + ')', 'I file viaggiano in parallelo.');
+    chk('Rete e server', 4);
+    if (nav && (nav.redirectCount > 0 || nav.redirectEnd > 0)) add('tip', 'L\'indirizzo passa da un redirect', 'Prima di arrivare alla pagina il browser viene rimandato altrove' + (nav.redirectEnd ? ' (' + Math.round(nav.redirectEnd - nav.redirectStart) + ' ms persi)' : '') + ': nei link e negli annunci usa l\'indirizzo finale (https, con o senza www, con la / finale giusta).', null, 0.5);
+    else if (nav) add('ok', 'Nessun redirect', 'Si arriva diretti alla pagina.');
+    var early = oL.filter(function (h) { return third.some(function (e) { return host(e.name) === h && fcp && e.startTime < fcp; }); });
+    var hinted = [].map.call(document.querySelectorAll('link[rel~=preconnect],link[rel~=dns-prefetch]'), function (l) { return host(l.href); });
+    var miss = early.filter(function (h) { return hinted.indexOf(h) < 0; });
+    chk('Rete e server', 3);
+    if (miss.length) add('tip', 'Collegati prima ai siti che servono subito', miss.slice(0, 3).join(', ') + (miss.length > 1 ? ' servono' : ' serve') + ' già per il primo disegno: aggiungi <link rel="preconnect" href="https://' + miss[0] + '"> nell\'head.', null, 0.6);
+    else if (early.length) add('ok', 'Preconnect ai siti esterni', 'I siti che servono subito sono già anticipati.');
+    var order = { error: 0, warn: 1, tip: 2, ok: 3 };
+    out.sort(function (a, b) { return order[a.sev] - order[b.sev]; });
+    perf.list = out;
+    return out;
+  }
+
+  // --- PageSpeed Insights di Google (Lighthouse + dati reali CrUX), a richiesta ---
+  var CRUX = { LARGEST_CONTENTFUL_PAINT_MS: ['LCP', 'Contenuto principale', 'ms'], INTERACTION_TO_NEXT_PAINT: ['INP', 'Risposta ai clic', 'ms'], CUMULATIVE_LAYOUT_SHIFT_SCORE: ['CLS', 'Stabilità', 'cls'], FIRST_CONTENTFUL_PAINT_MS: ['FCP', 'Primo contenuto', 'ms'], EXPERIMENTAL_TIME_TO_FIRST_BYTE: ['TTFB', 'Risposta del server', 'ms'] };
+  var CRUX_C = { FAST: ['Buono', '#2f9e6a'], AVERAGE: ['Da migliorare', '#e08a1e'], SLOW: ['Scarso', '#d64545'] };
+  function cruxVal(m, v) { return m[2] === 'cls' ? (v / 100).toFixed(2).replace('.', ',') : v >= 1000 ? secs(v) : Math.round(v) + ' ms'; }
+  function psiRun(strategy) {
+    strategy = strategy === 'desktop' ? 'desktop' : 'mobile';
+    perf.strategy = strategy;
+    if (!opts.psi) return;
+    perf.psiState[strategy] = 'loading'; perf.psiErr[strategy] = '';
+    say('Chiedo a PageSpeed di Google di analizzare la pagina ' + (strategy === 'mobile' ? 'da telefono' : 'da computer') + '... ci vogliono 20-40 secondi ⏳');
+    var t0 = Date.now();
+    opts.psi(strategy).then(function (r) {
+      perf.psi[strategy] = r; perf.psiState[strategy] = 'done';
+      var p = r.cats && r.cats.performance;
+      say('PageSpeed ' + (strategy === 'mobile' ? 'mobile' : 'computer') + (p ? ': prestazioni ' + p.score + '/100' : '') + ' (in ' + Math.round((Date.now() - t0) / 1000) + ' s). I dettagli sono nella scheda Velocità.');
+    }, function (e) {
+      perf.psiState[strategy] = 'error'; perf.psiErr[strategy] = String(e && e.message || e);
+      say(psiErrText(perf.psiErr[strategy]));
+    }).then(function () { if (uxPanel.style.display === 'block') { var st = uxPanel.scrollTop; renderUx(); uxPanel.scrollTop = st; } });
+  }
+  function psiErrText(e) {
+    if (e === 'nokey') return 'Per PageSpeed serve la tua chiave API di Google (gratis): inseriscila dall\'icona di Nimblu in alto, nella sezione «PageSpeed di Google».';
+    if (e === 'badkey') return 'Google dice che la chiave API non è valida: ricontrollala nel pannellino dell\'estensione (e che l\'API «PageSpeed Insights» sia abilitata nel progetto).';
+    if (e === 'quota') return 'Google ha chiuso il rubinetto: quota di analisi finita per oggi (o troppe richieste di fila). Riprova più tardi.';
+    if (/FAILED_DOCUMENT_REQUEST|ERRORED_DOCUMENT_REQUEST|DNS_FAILURE|NOT_HTML|unable to fetch/i.test(e)) return 'Google non riesce ad aprire la pagina: deve essere pubblica (niente staging con password, localhost o pagine da loggati).';
+    return 'PageSpeed non ha risposto: ' + shortTxt(e, 160);
+  }
+  function psiPageUrl(strategy) { return 'https://pagespeed.web.dev/analysis?url=' + encodeURIComponent(location.href.split('#')[0]) + '&form_factor=' + (strategy === 'desktop' ? 'desktop' : 'mobile'); }
+  function psiHtml() {
+    var s = perf.strategy, r = perf.psi[s], st = perf.psiState[s], h = '<div class="psi"><div class="psih"><b>PageSpeed di Google</b><span class="psis">' +
+      [['mobile', '📱 Mobile'], ['desktop', '🖥 Computer']].map(function (x) { return '<button type="button" data-psis="' + x[0] + '" aria-pressed="' + (s === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</span></div>';
+    if (!opts.psi) return h + '<p class="sub">Con l\'estensione per Chrome Nimblu chiede i dati a Google e li mostra qui. Da qui puoi aprire PageSpeed nel sito di Google: <a href="' + esc(psiPageUrl(s)) + '" target="_blank" rel="noopener">analizza su pagespeed.web.dev ↗</a></p></div>';
+    if (st === 'loading') return h + '<p class="sub">⏳ Google sta analizzando la pagina ' + (s === 'mobile' ? 'come da telefono' : 'come da computer') + ': di solito 20-40 secondi.</p></div>';
+    if (!r) return h + (st === 'error' ? '<p class="psierr">' + esc(psiErrText(perf.psiErr[s])) + '</p>' : '') +
+      '<button type="button" class="ask" data-psi="run">⚡ Analizza con PageSpeed (' + (s === 'mobile' ? 'mobile' : 'computer') + ')</button><p class="sub">A Google arriva solo l\'indirizzo: la pagina deve essere pubblica. Serve la tua chiave API, dall\'icona dell\'estensione.</p></div>';
+    var cats = ['performance', 'accessibility', 'best-practices', 'seo'].filter(function (k) { return r.cats && r.cats[k]; });
+    h += '<div class="psic">' + cats.map(function (k) { var c = r.cats[k]; return '<span><b style="color:' + scoreCol(c.score) + ';border-color:' + scoreCol(c.score) + '">' + c.score + '</b>' + esc(c.title) + '</span>'; }).join('') + '</div>';
+    var fd = r.field && r.field.metrics ? r.field : r.origin && r.origin.metrics ? r.origin : null;
+    h += '<h4>Dati reali degli utenti' + (fd ? (fd === r.origin ? ' (tutto il sito)' : '') + ', ultimi 28 giorni' : '') + '</h4>';
+    if (fd) h += '<table class="geo"><tbody>' + Object.keys(CRUX).filter(function (k) { return fd.metrics[k]; }).map(function (k) {
+      var m = CRUX[k], v = fd.metrics[k], c = CRUX_C[v.category] || ['', '#5b6f96'];
+      return '<tr><th><span class="dot" style="background:' + c[1] + '"></span>' + m[0] + ' · ' + m[1] + '</th><td><b>' + cruxVal(m, v.percentile) + '</b> <small style="color:' + c[1] + '">' + c[0] + '</small></td></tr>';
+    }).join('') + '</tbody></table>';
+    else h += '<p class="sub">Google non ha abbastanza visite reali di questa pagina (Chrome UX Report): conta il laboratorio qui sotto.</p>';
+    h += '<h4>Laboratorio (' + (s === 'mobile' ? 'telefono simulato, rete 4G lenta' : 'computer') + ')</h4><table class="geo"><tbody>' + (r.metrics || []).map(function (m) {
+      return '<tr><th><span class="dot" style="background:' + scoreCol(Math.round((m.score || 0) * 100)) + '"></span>' + esc(m.title) + '</th><td><b>' + esc(m.value || '') + '</b></td></tr>';
+    }).join('') + '</tbody></table>';
+    var perfA = (r.audits || []).filter(function (a) { return a.cat === 'performance'; }), other = (r.audits || []).filter(function (a) { return a.cat !== 'performance'; });
+    if (perfA.length) h += '<h4>Cosa migliorare per la velocità (' + perfA.length + ')</h4><ul>' + perfA.map(psiItemHtml).join('') + '</ul>';
+    if (other.length) h += '<details><summary style="color:#4f74b3">Altri avvisi di Google: accessibilità, best practice, SEO (' + other.length + ')</summary><ul>' + other.map(psiItemHtml).join('') + '</ul></details>';
+    h += '<p class="sub">Analisi di Google del ' + esc(new Date(r.fetchTime).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) + ' · Lighthouse ' + esc(r.version || '') + ' · <a href="' + esc(psiPageUrl(s)) + '" target="_blank" rel="noopener">apri su pagespeed.web.dev ↗</a> · <button type="button" class="lnk" data-psi="run">rifai</button></p>';
+    return h + '</div>';
+  }
+  function psiItemHtml(a) {
+    var i = (perf.psi[perf.strategy].audits || []).indexOf(a), sev = a.score < 0.5 ? 'error' : 'warn';
+    return '<li><button type="button" class="fl" data-psia="' + i + '"><span class="dot" style="background:' + SEV[sev].c + '"></span><span class="t">' + esc(a.title) + (a.items && a.items.some(function (x) { return x.selector; }) ? ' ↗' : '') + '</span><span class="pt">' + esc(a.value || '') + '</span><small>' + esc(shortTxt(a.desc, 260)) + '</small></button></li>';
+  }
+  // clic su un avviso di Google: se indica un elemento della pagina, Nimblu ci porta; altrimenti lo legge
+  function psiPoint(a) {
+    var els = [];
+    (a.items || []).forEach(function (x) { if (x.selector) { try { var el = window.document.querySelector(x.selector); if (el && !uxOurs(el)) els.push(el); } catch (e) {} } });
+    var files = (a.items || []).filter(function (x) { return x.url; }).slice(0, 3).map(function (x) { return fileName(x.url) + (x.saving ? ' (' + x.saving + ')' : ''); });
+    var f = { title: a.title, detail: shortTxt(a.desc, 200) + (files.length ? ' File: ' + files.join(', ') + '.' : ''), els: els, sev: a.score < 0.5 ? 'error' : 'warn' };
+    if (els.length) pointAt(f); else say(f.title + (a.value ? ' (' + a.value + ')' : '') + '. ' + f.detail);
+  }
+  // PageSpeed nel report: una «scheda» in più con i quattro voti di Google come categorie e gli avvisi come gruppi
+  function psiReportTabs() {
+    return ['mobile', 'desktop'].filter(function (s) { return perf.psi[s]; }).map(function (s) {
+      var r = perf.psi[s], fd = r.field && r.field.metrics ? r.field : r.origin && r.origin.metrics ? r.origin : null;
+      var item = function (a) { return { title: a.title, cat: (r.cats[a.cat] || {}).title || a.cat, gain: 0, gainTxt: a.value || '', value: '', detail: a.desc, els: (a.items || []).slice(0, 6).map(function (x) { return { desc: x.label || (x.url ? fileName(x.url) : ''), sel: x.selector || x.url || '', sug: x.saving ? 'risparmio ' + x.saving : '' }; }), more: 0, code: '', where: '' }; };
+      var groups = [];
+      if (fd) groups.push({ sev: 'tip', h: 'Dati reali degli utenti, ultimi 28 giorni' + (fd === r.origin ? ' (tutto il sito)' : ''), c: '#4f74b3', items: Object.keys(CRUX).filter(function (k) { return fd.metrics[k]; }).map(function (k) {
+        var m = CRUX[k], v = fd.metrics[k], c = CRUX_C[v.category] || ['', ''];
+        return { title: m[0] + ' · ' + m[1] + ': ' + cruxVal(m, v.percentile), cat: c[0], gain: 0, gainTxt: '', value: '', detail: 'Valore al 75° percentile delle visite reali (Chrome UX Report).', els: [], more: 0, code: '', where: '' };
+      }) });
+      groups.push({ sev: 'tip', h: 'Laboratorio (' + (s === 'mobile' ? 'telefono simulato' : 'computer') + ')', c: '#4f74b3', items: (r.metrics || []).map(function (m) { return { title: m.title + ': ' + (m.value || ''), cat: 'Lighthouse', gain: 0, gainTxt: '', value: '', detail: '', els: [], more: 0, code: '', where: '' }; }) });
+      var pa = (r.audits || []).filter(function (a) { return a.cat === 'performance'; }), oa = (r.audits || []).filter(function (a) { return a.cat !== 'performance'; });
+      if (pa.length) groups.push({ sev: 'warn', h: 'Cosa migliorare per la velocità', c: SEV.warn.c, items: pa.map(item) });
+      if (oa.length) groups.push({ sev: 'warn', h: 'Altri avvisi: accessibilità, best practice, SEO', c: SEV.warn.c, items: oa.map(item) });
+      return { k: 'psi-' + s, name: 'PageSpeed di Google · ' + (s === 'mobile' ? 'mobile' : 'computer'), short: 'PageSpeed ' + (s === 'mobile' ? 'mobile' : 'computer'), sc: r.cats && r.cats.performance ? r.cats.performance.score : 0,
+        cats: ['performance', 'accessibility', 'best-practices', 'seo'].filter(function (k) { return r.cats && r.cats[k]; }).map(function (k) { return { icon: '', name: r.cats[k].title, sc: r.cats[k].score }; }), serp: null, groups: groups, ok: [] };
+    });
+  }
+
   var uxPanel = mk('div');
   uxPanel.id = '__nimblu_ux';
   css.textContent +=
@@ -6404,7 +6634,17 @@ window.__MASCOT_SRC = function (opts) {
     '#__nimblu_ux details{margin:10px 0 0}' +
     '#__nimblu_ux summary{cursor:pointer;margin:0 0 4px;font:700 11px/1.3 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:#2f9e6a}' +
     '#__nimblu_ux .tabs button{padding:6px 2px;gap:3px;white-space:nowrap;font-size:11.5px}' +
-    '#__nimblu_ux .tabs{gap:2px}#__nimblu_ux .tabs .score{padding:3px 4px}' +
+    '#__nimblu_ux .tabs{gap:2px;grid-template-columns:repeat(3,1fr)}#__nimblu_ux .tabs .score{padding:3px 4px}' +
+    '#__nimblu_ux .psi{background:#fff;border:1.5px solid #c9d6ee;border-radius:12px;padding:9px 10px;margin:0 0 8px}' +
+    '#__nimblu_ux .psih{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 6px}#__nimblu_ux .psih b{font:700 13px/1.2 system-ui,sans-serif}' +
+    '#__nimblu_ux .psis{display:flex;gap:2px;padding:2px;background:#e2eaf7;border-radius:9px}' +
+    '#__nimblu_ux .psis button{display:block;width:auto;padding:4px 7px;border:0;background:transparent;font:700 11px/1.2 system-ui,sans-serif;color:#22314f;border-radius:7px}' +
+    '#__nimblu_ux .psis button[aria-pressed=true]{background:#2d3e63;color:#fff}' +
+    '#__nimblu_ux .psic{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:2px 0 6px;text-align:center}' +
+    '#__nimblu_ux .psic span{display:grid;justify-items:center;gap:4px;font:600 10.5px/1.2 system-ui,sans-serif;color:#4a5d82}' +
+    '#__nimblu_ux .psic b{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;border:3px solid;font:800 13px/1 system-ui,sans-serif}' +
+    '#__nimblu_ux .psierr{margin:0 0 6px;padding:6px 8px;border-radius:8px;background:#fdeceb;color:#8a1c24;font:600 12px/1.4 system-ui,sans-serif}' +
+    '#__nimblu_ux .psi h4{margin:8px 0 4px}#__nimblu_ux .psi table.geo{margin:0 0 4px}#__nimblu_ux .psi table.geo td{text-align:right;white-space:nowrap}#__nimblu_ux .psi table.geo tbody th{width:auto}' +
     '#__nimblu_ux .rep{display:block;width:auto;padding:6px 10px;background:#e2eaf7;border:0;border-radius:999px;font:700 12px/1 system-ui,-apple-system,sans-serif;color:#22314f;white-space:nowrap}' +
     '#__nimblu_ux .rep:hover,#__nimblu_ux .rep[aria-expanded=true]{background:#cfdcf0}' +
     '#__nimblu_ux .repfmt{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:8px;margin:4px 0 6px;background:#e2eaf7;border-radius:11px}' +
@@ -6473,7 +6713,7 @@ window.__MASCOT_SRC = function (opts) {
     if (m) document = mob.doc;
     try { return fn(); } finally { document = d0; }
   }
-  function runAudits() { inMode(function () { audit(); seoAudit(); a11yAudit(); geoAudit(); aeoAudit(); }); }
+  function runAudits() { inMode(function () { audit(); seoAudit(); a11yAudit(); geoAudit(); aeoAudit(); perfAudit(); }); }
   function mobileStart(cb) {
     if (mob.state === 'ready') { if (cb) cb(); return; }
     if (cb) mob.cbs.push(cb);
@@ -6576,12 +6816,20 @@ window.__MASCOT_SRC = function (opts) {
   function scoreBadge(sc) { return '<span class="score" style="background:' + (sc >= 80 ? '#2f9e6a' : sc >= 55 ? '#e08a1e' : '#d64545') + '">' + sc + '</span>'; }
   function renderUx() {
     var tab = curTab();
-    var html = '<div class="hd"><b>🔍 Controllo della pagina</b><button type="button" class="rep" data-ux="report" title="Scarica un file con tutti gli avvisi e i consigli delle cinque schede: pagina web, PDF, Word o testo" aria-expanded="' + !!ux.repOpen + '">📄 Report</button><button type="button" class="x" data-ux="close" aria-label="Chiudi">✕</button></div>' + repFmtHtml() + modeHtml() +
+    var html = '<div class="hd"><b>🔍 Controllo della pagina</b><button type="button" class="rep" data-ux="report" title="Scarica un file con tutti gli avvisi e i consigli di tutte le schede: pagina web, PDF, Word o testo" aria-expanded="' + !!ux.repOpen + '">📄 Report</button><button type="button" class="x" data-ux="close" aria-label="Chiudi">✕</button></div>' + repFmtHtml() + modeHtml() +
       '<div class="tabs"><button type="button" data-tab="ux" aria-pressed="' + (tab === 'ux') + '" title="Usabilità e conversione">UX ' + scoreBadge(uxScore()) + '</button>' +
       '<button type="button" data-tab="seo" aria-pressed="' + (tab === 'seo') + '">SEO ' + scoreBadge(seoScore()) + '</button>' +
+      '<button type="button" data-tab="perf" aria-pressed="' + (tab === 'perf') + '" title="Velocità di caricamento, come PageSpeed di Google">Velocità ' + scoreBadge(perfScore()) + '</button>' +
       '<button type="button" data-tab="geo" aria-pressed="' + (tab === 'geo') + '" title="GEO: farsi trovare e citare da ChatGPT, Perplexity, Gemini e dai riassunti AI di Google">GEO ' + scoreBadge(geoScore()) + '</button>' +
       '<button type="button" data-tab="aeo" aria-pressed="' + (tab === 'aeo') + '" title="AEO: le risposte dirette nei riquadri di Google, in «Le persone chiedono anche» e negli assistenti vocali">AEO ' + scoreBadge(aeoScore()) + '</button>' +
       '<button type="button" data-tab="a11y" aria-pressed="' + (tab === 'a11y') + '" title="Per chi è cieco o ipovedente e usa lo screen reader">Non vedenti ' + scoreBadge(a11yScore()) + '</button></div>';
+    if (tab === 'perf') {
+      html += '<p class="sub"><b>Velocità</b>: i voti qui sotto sono misurati sul caricamento vero della pagina in questo browser, senza mandare niente a nessuno. Per i numeri ufficiali di Google c\'è PageSpeed.</p>' +
+        psiHtml() + catsHtml(tab, perf.list || []) + findingsHtml(tab, perf.list || []) +
+        '<button type="button" class="re" data-ux="again">↻ Controlla di nuovo</button>';
+      uxPanel.innerHTML = html;
+      return;
+    }
     if (tab === 'aeo') {
       html += '<p class="sub"><b>AEO</b> (Answer Engine Optimization): quanto la pagina è pronta a dare una risposta diretta nei riquadri in evidenza di Google, in «Le persone chiedono anche» e negli assistenti vocali.</p>' +
         (opts.ai && opts.aiPage !== false ? '<button type="button" class="ask" data-ux="ask">✨ Chiedi all\'AI come finire nelle risposte dirette</button>' : '') +
@@ -6636,11 +6884,11 @@ window.__MASCOT_SRC = function (opts) {
     return h;
   }
   // ---------- report da scaricare ----------
-  // Tutto quello che mostra il pannello, in un file: i voti delle cinque schede e delle categorie, poi per ogni scheda
+  // Tutto quello che mostra il pannello, in un file: i voti delle sei schede (più PageSpeed, se chiesto) e delle categorie, poi per ogni scheda
   // gli avvisi e i consigli dal più importante, con il dettaglio, i punti che si guadagnano, gli elementi coinvolti
   // (testo e selettore CSS per ritrovarli) e i testi pronti. reportData() raccoglie i dati una volta sola; poi ogni
   // formato li scrive a modo suo: pagina web (HTML), PDF, Word (.docx) e testo (.txt). Tutto nel browser, senza librerie.
-  var REP_TABS = [['ux', 'UX e conversione'], ['seo', 'SEO'], ['geo', 'GEO · farsi citare dalle AI'], ['aeo', 'AEO · risposte dirette e vocali'], ['a11y', 'Non vedenti']];
+  var REP_TABS = [['ux', 'UX e conversione'], ['seo', 'SEO'], ['perf', 'Velocità · misurata in questo browser'], ['geo', 'GEO · farsi citare dalle AI'], ['aeo', 'AEO · risposte dirette e vocali'], ['a11y', 'Non vedenti']];
   var REP_FMT = { html: ['🌐', 'Pagina web', 'html'], pdf: ['📕', 'PDF', 'pdf'], docx: ['📘', 'Word', 'docx'], txt: ['📝', 'Testo', 'txt'] };
   // selettore CSS breve per ritrovare l'elemento (fino a 4 livelli, si ferma a un id)
   function cssPath(el) {
@@ -6656,6 +6904,7 @@ window.__MASCOT_SRC = function (opts) {
     return parts.join(' > ');
   }
   function gainOf(f) { return Math.round((f.w || 0) * (1 - (f.p != null ? f.p : PTS[f.sev]))); }
+  function gainTxt(f) { var g = f.gainTxt != null ? f.gainTxt : '+' + f.gain + ' punti'; return g ? ' · ' + g : ''; }
   function repCol(sc) { return sc >= 80 ? '#2f9e6a' : sc >= 55 ? '#e08a1e' : '#d64545'; }
   function reportData() {
     var now = new Date(), mobile = !!(ux.mobile && mob.state === 'ready'), cnt = { error: 0, warn: 0, tip: 0, ok: 0 };
@@ -6688,6 +6937,7 @@ window.__MASCOT_SRC = function (opts) {
         ok: L.filter(function (f) { return f.sev === 'ok'; }).map(function (f) { return { title: f.title, detail: f.detail || '' }; })
       };
     });
+    d.tabs = d.tabs.concat(psiReportTabs());
     d.cnt = cnt; d.todo = cnt.error + cnt.warn + cnt.tip;
     return d;
   }
@@ -6703,7 +6953,7 @@ window.__MASCOT_SRC = function (opts) {
       'header{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 26px}' +
       '.k{margin:0 0 6px;font:700 12px/1.3 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}' +
       'h1{margin:0 0 6px;font-size:26px;line-height:1.2;text-wrap:balance}.u{margin:0;color:var(--muted);font-size:14px;overflow-wrap:anywhere}' +
-      '.scores{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:20px 0 14px}' +
+      '.scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin:20px 0 14px}' +
       '.sc{border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-decoration:none;color:var(--ink)}.sc b{display:block;font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}.sc span{font-size:13px;color:var(--muted)}' +
       '.sum{margin:0;font-size:14px;color:var(--muted)}.sum i{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 4px 0 10px}.sum i:first-child{margin-left:0}' +
       'section{margin-top:28px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 26px}' +
@@ -6721,7 +6971,7 @@ window.__MASCOT_SRC = function (opts) {
       'details{margin-top:14px}summary{cursor:pointer;font:700 13px system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#2f9e6a}' +
       'details ul{margin:8px 0 0;padding-left:18px;font-size:14px}details li{margin:3px 0}details li span{color:var(--muted)}' +
       'footer{margin-top:28px;color:var(--muted);font-size:13px}' +
-      '@media (max-width:640px){.scores{grid-template-columns:repeat(2,1fr)}.cat{grid-template-columns:110px 1fr 30px}section,header{padding:18px}}' +
+      '@media (max-width:640px){.cat{grid-template-columns:110px 1fr 30px}section,header{padding:18px}}' +
       '@media print{body{background:#fff}section,header{border:0;padding:0}section{margin-top:22px}.wrap{padding:0}}' +
       '</style></head><body><div class="wrap"><header>' +
       '<p class="k">Report di Nimblu' + (d.version ? ' ' + esc(d.version) : '') + ' · ' + esc(d.view) + '</p>' +
@@ -6740,8 +6990,8 @@ window.__MASCOT_SRC = function (opts) {
       t.groups.forEach(function (g) {
         h += '<h3 style="color:' + g.c + '">' + g.h + ' (' + g.items.length + ')</h3><ol>' + g.items.map(function (f) {
           var rows = f.els.map(function (e) { return '<li>' + esc(e.desc) + ' <code class="sel">' + esc(e.sel) + '</code>' + (e.sug ? '<code class="sug">→ ' + esc(e.sug) + '</code>' : '') + '</li>'; }).join('') + (f.more ? '<li>+ altri ' + f.more + ' elementi</li>' : '');
-          return '<li class="f" style="border-left-color:' + g.c + '"><div class="fh"><b>' + esc(f.title) + '</b><span>' + esc(f.cat) + ' · +' + f.gain + ' punti</span></div>' +
-            (f.value ? '<p class="v">Sulla pagina: ' + esc(f.value) + '</p>' : '') + '<p>' + esc(f.detail) + '</p>' +
+          return '<li class="f" style="border-left-color:' + g.c + '"><div class="fh"><b>' + esc(f.title) + '</b><span>' + esc(f.cat + gainTxt(f)) + '</span></div>' +
+            (f.value ? '<p class="v">Sulla pagina: ' + esc(f.value) + '</p>' : '') + (f.detail ? '<p>' + esc(f.detail) + '</p>' : '') +
             (rows ? '<ul class="els">' + rows + '</ul>' : '') + (f.code ? '<pre>' + esc(f.code) + '</pre>' : '') + (f.where ? '<p class="wh">💡 ' + esc(f.where) + '</p>' : '') + '</li>';
         }).join('') + '</ol>';
       });
@@ -6771,9 +7021,9 @@ window.__MASCOT_SRC = function (opts) {
       t.groups.forEach(function (g) {
         line(); line(g.h.toUpperCase() + ' (' + g.items.length + ')');
         g.items.forEach(function (f, i) {
-          line(); line((i + 1) + '. ' + f.title + '  [' + f.cat + ' · +' + f.gain + ' punti]');
+          line(); line((i + 1) + '. ' + f.title + '  [' + f.cat + gainTxt(f) + ']');
           if (f.value) line('   Sulla pagina: ' + f.value);
-          line('   ' + f.detail);
+          if (f.detail) line('   ' + f.detail);
           f.els.forEach(function (e) { line('   - ' + e.desc + '  (' + e.sel + ')'); if (e.sug) line('     → ' + e.sug); });
           if (f.more) line('   - + altri ' + f.more + ' elementi');
           if (f.code) { line('   Testo pronto:'); f.code.split('\n').forEach(function (l) { line('     ' + l); }); }
@@ -6854,9 +7104,9 @@ window.__MASCOT_SRC = function (opts) {
       t.groups.forEach(function (g) {
         b.push(par([{ t: g.h.toUpperCase() + ' (' + g.items.length + ')', color: g.c }], { style: 'Heading2' }));
         g.items.forEach(function (f) {
-          b.push(par([{ t: f.title, b: true }, { t: '   ' + f.cat + ' · +' + f.gain + ' punti', color: '#5b6f96', sz: 17 }], { bar: g.c, keep: true, before: 160, after: 30 }));
+          b.push(par([{ t: f.title, b: true }, { t: '   ' + f.cat + gainTxt(f), color: '#5b6f96', sz: 17 }], { bar: g.c, keep: true, before: 160, after: 30 }));
           if (f.value) b.push(par([{ t: 'Sulla pagina: ' + f.value, color: '#5b6f96' }], { bar: g.c, after: 30 }));
-          b.push(par(f.detail, { bar: g.c, after: 40 }));
+          if (f.detail) b.push(par(f.detail, { bar: g.c, after: 40 }));
           f.els.forEach(function (e) {
             b.push(par([{ t: e.desc + '  ' }, { t: e.sel, mono: true, color: '#5b6f96', sz: 16 }].concat(e.sug ? [{ t: '\n→ ' + e.sug, mono: true, color: '#1f6b45', sz: 17 }] : []), { bar: g.c, fill: 'F5F8FD', ind: 200, after: 20 }));
           });
@@ -6966,14 +7216,15 @@ window.__MASCOT_SRC = function (opts) {
     text(d.title, { f: 2, size: 20, lead: 25, after: 4 });
     text(d.url, { size: 9, color: '#4f74b3' });
     text('Controllata il ' + d.date + ' alle ' + d.time, { size: 9, color: '#5b6f96', after: 14 });
-    // i cinque voti in riquadri
-    var bw = (PW - 2 * M - 4 * 8) / 5;
+    // i voti delle schede in riquadri
+    var nT = d.tabs.length, bw = (PW - 2 * M - (nT - 1) * 6) / nT;
     need(52); y -= 52;
     d.tabs.forEach(function (t, k) {
-      var bx = M + k * (bw + 8);
+      var bx = M + k * (bw + 6);
       cur.push(rgb('#dbe4f3') + ' RG 0.8 w ' + bx.toFixed(2) + ' ' + y.toFixed(2) + ' ' + bw.toFixed(2) + ' 52 re S');
-      cur.push('BT /F2 20 Tf ' + rgb(repCol(t.sc)) + ' rg ' + (bx + 9).toFixed(2) + ' ' + (y + 25).toFixed(2) + ' Td ' + pstr(String(t.sc)) + ' Tj ET');
-      cur.push('BT /F1 8.5 Tf ' + rgb('#5b6f96') + ' rg ' + (bx + 9).toFixed(2) + ' ' + (y + 10).toFixed(2) + ' Td ' + pstr(winAnsi(t.short)) + ' Tj ET');
+      cur.push('BT /F2 20 Tf ' + rgb(repCol(t.sc)) + ' rg ' + (bx + 6).toFixed(2) + ' ' + (y + 25).toFixed(2) + ' Td ' + pstr(String(t.sc)) + ' Tj ET');
+      var lab = winAnsi(t.short), ls = 8.5; while (ls > 6 && wid(lab, 1, ls) > bw - 12) ls -= 0.5;
+      cur.push('BT /F1 ' + ls + ' Tf ' + rgb('#5b6f96') + ' rg ' + (bx + 6).toFixed(2) + ' ' + (y + 10).toFixed(2) + ' Td ' + pstr(lab) + ' Tj ET');
     });
     y -= 10;
     runs(['error', 'warn', 'tip'].map(function (s) { return { t: d.cnt[s] + ' ' + SEV[s].h.toLowerCase() + '   ', color: SEV[s].c, size: 9.5 }; }).concat([{ t: d.cnt.ok + ' controlli superati', color: SEV.ok.c, size: 9.5 }]), { lead: 14, after: 4 });
@@ -7001,9 +7252,9 @@ window.__MASCOT_SRC = function (opts) {
         g.items.forEach(function (f) {
           need(42); y -= 4;
           text(f.title, { f: 2, size: 10.5, x: 10, bar: g.c });
-          text(f.cat + ' · +' + f.gain + ' punti', { size: 8, x: 10, color: '#5b6f96', bar: g.c });
+          text(f.cat + gainTxt(f), { size: 8, x: 10, color: '#5b6f96', bar: g.c });
           if (f.value) text('Sulla pagina: ' + f.value, { size: 9, x: 10, color: '#5b6f96', bar: g.c });
-          text(f.detail, { size: 9.5, x: 10, bar: g.c });
+          if (f.detail) text(f.detail, { size: 9.5, x: 10, bar: g.c });
           f.els.forEach(function (e) {
             text(e.desc, { size: 8.5, x: 20, bar: g.c, fill: '#f5f8fd' });
             text(e.sel, { f: 3, size: 7.5, x: 20, color: '#5b6f96', bar: g.c, fill: '#f5f8fd' });
@@ -7065,7 +7316,7 @@ window.__MASCOT_SRC = function (opts) {
     a.href = url; a.download = name; a.setAttribute('data-mascot', '1'); a.style.display = 'none';
     root.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
-    say('Ecco il report ' + { html: 'come pagina web', pdf: 'in PDF', docx: 'in Word', txt: 'come testo' }[fmt] + ': ' + d.todo + (d.todo === 1 ? ' avviso o consiglio' : ' avvisi e consigli') + ' dalle cinque schede, nel file ' + name + ' 📄');
+    say('Ecco il report ' + { html: 'come pagina web', pdf: 'in PDF', docx: 'in Word', txt: 'come testo' }[fmt] + ': ' + d.todo + (d.todo === 1 ? ' avviso o consiglio' : ' avvisi e consigli') + ' da tutte le schede, nel file ' + name + ' 📄');
   }
   // la scelta del formato, sotto l'intestazione del pannello
   function repFmtHtml() {
@@ -7094,7 +7345,7 @@ window.__MASCOT_SRC = function (opts) {
       var items = items0.filter(function (f) { return f.sev === sev; });
       if (!items.length) return;
       var body = '<ul>' + items.map(function (f) {
-        return '<li><button type="button" class="fl" data-' + (tab === 'seo' ? 's' : tab === 'a11y' ? 'y' : 'i') + '="' + L.indexOf(f) + '"><span class="dot" style="background:' + SEV[sev].c + '"></span>' +
+        return '<li><button type="button" class="fl" data-' + (tab === 'seo' ? 's' : tab === 'a11y' ? 'y' : tab === 'perf' ? 'k' : 'i') + '="' + L.indexOf(f) + '"><span class="dot" style="background:' + SEV[sev].c + '"></span>' +
           '<span class="t">' + esc(f.title) + (f.els.length ? ' ↗' : '') + '</span><span class="pt" title="punti presi su quelli che vale">' + Math.round((f.w || 0) * (f.p != null ? f.p : PTS[f.sev])) + '/' + (f.w || 0) + '</span><small>' + esc(f.detail) + '</small></button></li>';
       }).join('') + '</ul>';
       html += sev === 'ok' ? '<details' + (sel ? ' open' : '') + '><summary>' + SEV[sev].h + ' (' + items.length + ')</summary>' + body + '</details>' : '<h4>' + SEV[sev].h + ' (' + items.length + ')</h4>' + body;
@@ -7127,7 +7378,7 @@ window.__MASCOT_SRC = function (opts) {
       var top = (a11y.list || []).filter(function (f) { return f.sev !== 'ok'; }).sort(function (a, b) { return a11yGain(b) - a11yGain(a); })[0];
       say('Per chi non vede' + (ux.mobile ? ', da telefono' : '') + ': ' + sc + '/100. ' + (top ? 'Primo consiglio: ' + top.title.charAt(0).toLowerCase() + top.title.slice(1) + (top.sug && top.sug[0] ? ', per esempio ' + top.sug[0] : top.code ? ': ' + top.code : '') + '. Gli altri sono nel pannello, con i testi pronti.' : 'Si usa bene anche senza vederla! ♿'));
     }
-    else say((ux.mobile ? 'Da telefono: ' : '') + (isSeo ? 'SEO ' : 'UX ') + sc + '/100' + (weak && weak.sc < 80 ? ': il punto più debole è «' + weak.name + '» (' + weak.sc + '). Clicca una voce e ti porto lì.' : isSeo ? ': per la SEO la pagina è messa bene! 🔎' : ': la pagina mi sembra in ordine! 👍'));
+    else say((ux.mobile ? 'Da telefono: ' : '') + (isSeo ? 'SEO ' : tk === 'perf' ? 'Velocità ' : 'UX ') + sc + '/100' + (weak && weak.sc < 80 ? ': il punto più debole è «' + weak.name + '» (' + weak.sc + '). Clicca una voce e ti porto lì.' : isSeo ? ': per la SEO la pagina è messa bene! 🔎' : ': la pagina mi sembra in ordine! 👍'));
   }
   function closeUx() {
     uxPanel.style.display = 'none'; ux.focus = null;
@@ -7185,6 +7436,13 @@ window.__MASCOT_SRC = function (opts) {
     if (zf) { if (zf.els.length) pointAt(zf); else say(zf.label + ': ' + (zf.value || '') + (zf.sev !== 'ok' && zf.detail ? '. ' + zf.detail : '')); return; }
     var gci = b.getAttribute('data-gc'), gf2 = gci != null && tRow(gci);
     if (gf2 && gf2.code) { say(gf2.label + ': ecco il testo pronto da incollare.'); copyText(gf2.code); return; }
+    var ki = b.getAttribute('data-k');
+    if (ki != null && perf.list) { pointAt(perf.list[+ki]); return; }
+    var ps = b.getAttribute('data-psis');
+    if (ps) { perf.strategy = ps; var st2 = uxPanel.scrollTop; renderUx(); uxPanel.scrollTop = st2; return; }
+    if (b.getAttribute('data-psi') === 'run') { psiRun(perf.strategy); var st3 = uxPanel.scrollTop; renderUx(); uxPanel.scrollTop = st3; return; }
+    var pa = b.getAttribute('data-psia');
+    if (pa != null && perf.psi[perf.strategy]) { psiPoint(perf.psi[perf.strategy].audits[+pa]); return; }
     var yi = b.getAttribute('data-y');
     if (yi != null && a11y.list) { pointAt(a11y.list[+yi]); return; }
     // esempio pronto: porta sull'elemento e copia il testo

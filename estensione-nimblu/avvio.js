@@ -14,6 +14,8 @@
       window.__MASCOT_SRC({
         persistent: true,
         version: chrome.runtime.getManifest().version,
+        // PageSpeed di Google: la chiamata la fa il service worker con la chiave salvata nel pannellino
+        psi: psiCall,
         level: s.level,
         uxAuto: s.uxAuto !== false,
         talk: s.talk !== false,
@@ -63,11 +65,22 @@
       if (window.__mascot.setPrefs) window.__mascot.setPrefs({ talk: s.talk !== false, tips: s.uxAuto !== false, water: s.water === true, noEat: s.noEat === true, wpAuto: s.wpAuto === true, noGlass: s.noGlass === true });
     }
   }
+  function psiCall(strategy) {
+    return new Promise(function (res, rej) {
+      try {
+        chrome.runtime.sendMessage({ type: 'nimblu-psi', url: location.href.split('#')[0], strategy: strategy }, function (r) {
+          if (chrome.runtime.lastError) return rej(chrome.runtime.lastError.message);
+          if (!r || r.error) return rej((r && r.error) || 'errore');
+          res(r);
+        });
+      } catch (e) { rej(String(e)); }
+    });
+  }
   // comandi dal pannellino dell'estensione (es. "Fai entrare l'omino")
   chrome.runtime.onMessage.addListener(function (m, sender, reply) {
     // controllo della pagina dall'icona: se Nimblu qui è nascosto o spento si apre solo il pannello, senza mascotte
     if (m && m.type === 'nimblu-check') {
-      if (!window.__mascot) window.__MASCOT_SRC({ persistent: true, panelOnly: true, version: chrome.runtime.getManifest().version, talk: false, uxAuto: false, noEat: true, aiPage: false });
+      if (!window.__mascot) window.__MASCOT_SRC({ persistent: true, panelOnly: true, version: chrome.runtime.getManifest().version, psi: psiCall, talk: false, uxAuto: false, noEat: true, aiPage: false });
       if (window.__mascot && window.__mascot.check) window.__mascot.check(!!m.mobile);
       reply({ ok: !!window.__mascot });
       return;

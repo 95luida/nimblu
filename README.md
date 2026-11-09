@@ -14,9 +14,9 @@ Nimblu è una mascotte (un axolotl) che cammina sulle pagine che visiti. Quando 
 
 ## Il controllo della pagina
 
-Clicca Nimblu → **🔍 Controlla la pagina** (oppure usa i bottoni in cima al pannellino dell’icona dell’estensione). Si apre un pannello con cinque schede (UX, SEO, GEO, AEO e Non vedenti), ognuna con il suo voto da 0 a 100 e le barre per categoria. In cima scegli se controllare la pagina com’è sul **🖥 computer** o sul **📱 telefono**. Le regole sono più di 100, fisse, e girano tutte nel browser (la scheda GEO legge anche `robots.txt` e `llms.txt` del sito).
+Clicca Nimblu → **🔍 Controlla la pagina** (oppure usa i bottoni in cima al pannellino dell’icona dell’estensione). Si apre un pannello con sei schede (UX, SEO, Velocità, GEO, AEO e Non vedenti), ognuna con il suo voto da 0 a 100 e le barre per categoria. In cima scegli se controllare la pagina com’è sul **🖥 computer** o sul **📱 telefono**. Le regole sono più di 100, fisse, e girano tutte nel browser (la scheda GEO legge anche `robots.txt` e `llms.txt` del sito).
 
-Con **📄 Report**, in alto nel pannello, scarichi tutto in un file: **pagina web, PDF, Word (.docx) o testo**. Dentro ci sono i voti, gli avvisi e i consigli di tutte e cinque le schede dal più importante, gli elementi da sistemare (con il selettore CSS per ritrovarli) e i testi pronti da incollare. Il file si crea nel browser: la pagina non viene mandata da nessuna parte.
+Con **📄 Report**, in alto nel pannello, scarichi tutto in un file: **pagina web, PDF, Word (.docx) o testo**. Dentro ci sono i voti, gli avvisi e i consigli di tutte le schede (e di PageSpeed, se l’hai chiesto) dal più importante, gli elementi da sistemare (con il selettore CSS per ritrovarli) e i testi pronti da incollare. Il file si crea nel browser: la pagina non viene mandata da nessuna parte.
 
 | UX e conversione | SEO | Non vedenti |
 |---|---|---|
@@ -71,9 +71,17 @@ Cliccando un esempio, la pagina scorre fino all’elemento, Nimblu ci salta sopr
 
 <p align="center"><img src="docs/img/esempio-copiato.png" width="520" alt="L’icona di Instagram evidenziata e Nimblu che dice: Prova così aria-label Instagram. Copiato!"></p>
 
+**Velocità**, come PageSpeed
+- *Misurata qui:* sul caricamento vero della pagina, nel tuo browser e senza mandare niente a nessuno: LCP (con l’elemento), CLS, FCP, TTFB, INP sui clic fatti e blocchi del thread principale;
+- *Immagini:* più grandi di come si vedono, in JPG/PNG invece di WebP/AVIF, sopra i 200 KB, lontane ma caricate subito, senza larghezza e altezza, immagine principale in lazy o senza `fetchpriority`;
+- *Codice e caricamento:* file che bloccano il primo disegno, file di testo non compressi, peso della pagina e del JavaScript, richieste, elementi HTML, caratteri senza `font-display`;
+- *Rete e server:* siti esterni, HTTP/1.1, redirect, preconnect mancanti.
+
+In cima alla scheda c’è **PageSpeed di Google** (mobile o computer): i quattro voti di Lighthouse, i dati reali degli utenti degli ultimi 28 giorni (Chrome UX Report), le metriche di laboratorio e cosa migliorare con i risparmi stimati; cliccando un avviso che indica un elemento, Nimblu ti porta lì. Serve una chiave API gratuita di Google da incollare nel pannellino dell’estensione (abilita *PageSpeed Insights API* in [Google Cloud](https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com) e crea una chiave in *Credenziali*). A Google arriva solo l’indirizzo della pagina, che deve essere pubblica; la chiamata parte dal service worker dell’estensione, così la chiave non passa dalla pagina.
+
 **Da telefono** (dal menu di Nimblu **📱 Controlla come si vede da telefono**, oppure *Telefono* in cima al pannello)
 
-Nimblu scarica la stessa pagina e la apre in una cornice larga 390 px, come un iPhone: il sito mostra il suo layout mobile e i controlli di tutte e cinque le schede girano lì, con le misure del telefono (cosa si vede nella prima schermata, scroll laterale, bottoni da toccare). La cornice resta accanto al pannello come anteprima: cliccando un problema scorre fin lì e lo evidenzia. In più c’è la categoria *Telefono*:
+Nimblu scarica la stessa pagina e la apre in una cornice larga 390 px, come un iPhone: il sito mostra il suo layout mobile e i controlli di tutte le schede girano lì, con le misure del telefono (cosa si vede nella prima schermata, scroll laterale, bottoni da toccare). La cornice resta accanto al pannello come anteprima: cliccando un problema scorre fin lì e lo evidenzia. In più c’è la categoria *Telefono*:
 - campi del form con il testo sotto i 16 px, che su iPhone fanno zoomare la pagina;
 - email e telefono in campi di testo normali, che aprono la tastiera sbagliata;
 - header, banner e barre fisse che coprono più di un quarto dello schermo;
@@ -140,7 +148,7 @@ stickman.js          l’omino distruttore da solo, come segnalibro
 docs/                presentazione in PDF e immagini
 ```
 
-Un solo file, `mascot.js` (circa 7.000 righe di JavaScript, nessuna dipendenza), usato da estensione, demo e segnalibro. I controlli sono cinque funzioni (`audit`, `seoAudit`, `geoAudit`, `aeoAudit`, `a11yAudit`) con lo stesso schema: ogni controllo dichiara categoria e peso, poi aggiunge un risultato con il suo punteggio. Per la vista telefono le stesse funzioni girano sul documento della cornice: `inMode()` punta per un attimo `document` e le misure dello schermo sulla copia larga 390 px.
+Un solo file, `mascot.js` (circa 7.000 righe di JavaScript, nessuna dipendenza), usato da estensione, demo e segnalibro. I controlli sono sei funzioni (`audit`, `seoAudit`, `perfAudit`, `geoAudit`, `aeoAudit`, `a11yAudit`) con lo stesso schema: ogni controllo dichiara categoria e peso, poi aggiunge un risultato con il suo punteggio. Per la vista telefono le stesse funzioni girano sul documento della cornice: `inMode()` punta per un attimo `document` e le misure dello schermo sulla copia larga 390 px.
 
 Se modifichi `mascot.js`, copialo anche in `estensione-nimblu/` e `nimblu-app/`.
 

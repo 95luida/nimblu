@@ -53,6 +53,20 @@ function runCheck(mobile) {
 $('check').addEventListener('click', function () { runCheck(false); });
 $('checkMob').addEventListener('click', function () { runCheck(true); });
 
+// ---------- chiave di PageSpeed ----------
+chrome.storage.local.get(['psiKey'], function (s) {
+  var k = s.psiKey || '';
+  if (k) { $('psiKey').placeholder = 'Chiave salvata (…' + k.slice(-4) + '): incollane un\'altra per cambiarla'; }
+});
+$('psiKey').addEventListener('change', function () {
+  var v = $('psiKey').value.trim();
+  chrome.storage.local.set({ psiKey: v }, function () {
+    $('psiKey').value = '';
+    $('psiKey').placeholder = v ? 'Chiave salvata (…' + v.slice(-4) + '): incollane un\'altra per cambiarla' : 'Incolla qui la chiave (AIza…)';
+    $('psiInfo').textContent = v ? 'Chiave salvata. Apri la scheda Velocità e premi «Analizza con PageSpeed».' : 'Chiave tolta.';
+  });
+});
+
 // ---------- rissa con l'omino ----------
 $('fight').addEventListener('click', function () {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {

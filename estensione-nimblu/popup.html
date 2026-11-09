@@ -44,6 +44,12 @@
   .empty { color:var(--muted); font-size:12px; margin:0; }
   .memhead { display:flex; justify-content:space-between; align-items:baseline; }
   #note { margin:12px 0 0; color:var(--muted); font-size:12px; }
+  .psil { display:block; font-weight:600; margin:0 0 6px; }
+  .psil small { display:block; color:var(--muted); font-size:11px; font-weight:500; }
+  #psiKey { width:100%; font:500 12px/1.2 ui-monospace,Menlo,monospace; padding:7px 8px; border:1.5px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); }
+  #psiKey:focus { outline:none; border-color:var(--on); }
+  #psiInfo { margin:6px 0 0; color:var(--muted); font-size:11.5px; }
+  #psiInfo a { color:var(--on); }
 </style>
 </head>
 <body>
@@ -52,7 +58,7 @@
     <div><h1>Nimblu</h1><p>La creatura del laghetto delle tue pagine</p></div>
   </header>
 
-  <button class="primary check" id="check">🔍 Controlla la pagina: UX, SEO, GEO, AEO e non vedenti</button>
+  <button class="primary check" id="check">🔍 Controlla la pagina: UX, SEO, velocità, GEO, AEO e non vedenti</button>
   <button class="primary check mob" id="checkMob">📱 Controlla come si vede da telefono</button>
   <p class="empty" id="checkNote" hidden></p>
 
@@ -74,6 +80,13 @@
   </div>
   <label class="row" for="aiOn"><span>Risponde con l'AI<small>Altrimenti usa le risposte già scritte</small></span><input type="checkbox" id="aiOn"></label>
   <label class="row" for="aiPage"><span>Può leggere la pagina<small>Per commentarla quando glielo chiedi</small></span><input type="checkbox" id="aiPage"></label>
+
+  <h2>PageSpeed di Google</h2>
+  <div class="ai">
+    <label for="psiKey" class="psil">Chiave API di Google<small>Gratis: serve per i dati di PageSpeed nella scheda Velocità. Resta in Chrome, su questo computer.</small></label>
+    <input id="psiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Incolla qui la chiave (AIza…)">
+    <p id="psiInfo">Come averla: apri <a href="https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com" target="_blank" rel="noopener">l'API PageSpeed Insights</a> e premi <b>Abilita</b>, poi in <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Credenziali</a> scegli <b>Crea credenziali → Chiave API</b>.</p>
+  </div>
 
   <div class="memhead"><h2>Cosa ricorda di te</h2><button class="ghost" id="memClear" hidden>Cancella tutto</button></div>
   <ul id="mem"></ul>

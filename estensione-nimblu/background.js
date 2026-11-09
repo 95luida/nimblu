@@ -112,7 +112,62 @@ async function handleChat(msg) {
   return { reply: d.risposta, action: d.azione, remembered: nuovi, tips: pagina ? d.consigli : [] };
 }
 
+// ---------- PageSpeed Insights di Google ----------
+// La chiamata parte da qui, non dalla pagina: la chiave dell'utente non finisce tra le risorse che gli script del sito
+// possono leggere. Il JSON di Google pesa più di 1 MB: si tengono solo voti, dati reali, metriche e avvisi da sistemare.
+function mdText(s) { return String(s || '').replace(/\s*\[(Scopri di più|Ulteriori informazioni|Scopri come|Learn more)[^\]]*\]\([^)]+\)\.?/gi, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/`([^`]+)`/g, '$1').replace(/\s+/g, ' ').trim(); }
+function psiTrim(j, strategy) {
+  var lh = j.lighthouseResult || {}, A = lh.audits || {}, cats = {}, seen = {}, audits = [];
+  Object.keys(lh.categories || {}).forEach(function (k) {
+    var c = lh.categories[k];
+    cats[k] = { title: c.title, score: Math.round((c.score || 0) * 100) };
+    (c.auditRefs || []).forEach(function (r) {
+      var a = A[r.id];
+      if (!a || seen[r.id] || a.score === null || a.score >= 0.9 || /^(notApplicable|manual|informative)$/.test(a.scoreDisplayMode)) return;
+      if (k === 'performance' && r.group === 'metrics') return;
+      seen[r.id] = 1;
+      // Lighthouse 12 a volte mette le tabelle dentro una lista: si appiattisce di un livello
+      var det = a.details || {}, raw = [];
+      (det.items || []).forEach(function (it) { if (it && Array.isArray(it.items)) raw = raw.concat(it.items); else raw.push(it); });
+      var items = raw.slice(0, 6).map(function (it) {
+        var node = it.node || (it.source && it.source.type === 'node' ? it.source : null) || {};
+        var saving = it.wastedBytes ? Math.round(it.wastedBytes / 1024) + ' KB' : it.wastedMs ? Math.round(it.wastedMs) + ' ms' : '';
+        return { url: typeof it.url === 'string' ? it.url : '', label: mdText(node.nodeLabel || ''), selector: node.selector || '', saving: saving };
+      });
+      audits.push({ id: r.id, cat: k, title: mdText(a.title), desc: mdText(a.description), value: a.displayValue || '', score: a.score, weight: r.weight || 0, items: items,
+        savingsMs: (det.overallSavingsMs || 0), savingsBytes: (det.overallSavingsBytes || 0) });
+    });
+  });
+  var catOrder = { performance: 0, accessibility: 1, 'best-practices': 2, seo: 3 };
+  audits.sort(function (a, b) { return (catOrder[a.cat] - catOrder[b.cat]) || (b.savingsMs - a.savingsMs) || (b.weight - a.weight) || (a.score - b.score); });
+  var metrics = ['first-contentful-paint', 'largest-contentful-paint', 'total-blocking-time', 'cumulative-layout-shift', 'speed-index'].filter(function (id) { return A[id]; })
+    .map(function (id) { return { id: id, title: A[id].title, value: A[id].displayValue, score: A[id].score }; });
+  var crux = function (x) { return x && x.metrics ? { id: x.id, overall: x.overall_category, metrics: x.metrics } : null; };
+  return { url: lh.finalDisplayedUrl || lh.finalUrl || j.id, strategy: strategy, fetchTime: lh.fetchTime || j.analysisUTCTimestamp, version: lh.lighthouseVersion,
+    cats: cats, metrics: metrics, field: crux(j.loadingExperience), origin: crux(j.originLoadingExperience), audits: audits, warnings: lh.runWarnings || [] };
+}
+async function handlePsi(msg) {
+  var s = await chrome.storage.local.get(['psiKey']), key = String(s.psiKey || '').trim();
+  if (!key) return { error: 'nokey' };
+  var strategy = msg.strategy === 'desktop' ? 'desktop' : 'mobile';
+  var u = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=' + encodeURIComponent(msg.url) + '&strategy=' + strategy + '&locale=it&key=' + encodeURIComponent(key) +
+    ['performance', 'accessibility', 'best-practices', 'seo'].map(function (c) { return '&category=' + c; }).join('');
+  // Google ci mette 20-60 secondi: una chiamata a un'API ogni 20 s tiene sveglio il service worker
+  var ka = setInterval(function () { chrome.runtime.getPlatformInfo(function () {}); }, 20000), ctl = new AbortController(), t = setTimeout(function () { ctl.abort(); }, 150000);
+  try {
+    var r = await fetch(u, { signal: ctl.signal }), j = await r.json().catch(function () { return {}; });
+    if (!r.ok || j.error) {
+      var m = (j.error && j.error.message) || ('HTTP ' + r.status);
+      return { error: r.status === 429 ? 'quota' : /API key not valid|API_KEY_INVALID|has not been used|is disabled|SERVICE_DISABLED/i.test(m) ? 'badkey' : m };
+    }
+    return psiTrim(j, strategy);
+  } catch (e) {
+    return { error: e && e.name === 'AbortError' ? 'Google non ha risposto in 150 secondi.' : String(e && e.message || e) };
+  } finally { clearInterval(ka); clearTimeout(t); }
+}
+
 chrome.runtime.onMessage.addListener(function (msg, sender, send) {
+  if (msg && msg.type === 'nimblu-psi') { handlePsi(msg).then(send); return true; }
   if (!msg || msg.type !== 'nimblu-chat') return;
   handleChat(msg).then(send, function (e) { send({ error: String(e && e.message || e) }); });
   return true;
