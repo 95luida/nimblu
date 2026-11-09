@@ -16,6 +16,8 @@ Nimblu è una mascotte (un axolotl) che cammina sulle pagine che visiti. Quando 
 
 Clicca Nimblu → **🔍 Controlla la pagina** (oppure usa i bottoni in cima al pannellino dell’icona dell’estensione). Si apre un pannello con cinque schede (UX, SEO, GEO, AEO e Non vedenti), ognuna con il suo voto da 0 a 100 e le barre per categoria. In cima scegli se controllare la pagina com’è sul **🖥 computer** o sul **📱 telefono**. Le regole sono più di 100, fisse, e girano tutte nel browser (la scheda GEO legge anche `robots.txt` e `llms.txt` del sito).
 
+Con **📄 Report**, in alto nel pannello, scarichi tutto in un file: **pagina web, PDF, Word (.docx) o testo**. Dentro ci sono i voti, gli avvisi e i consigli di tutte e cinque le schede dal più importante, gli elementi da sistemare (con il selettore CSS per ritrovarli) e i testi pronti da incollare. Il file si crea nel browser: la pagina non viene mandata da nessuna parte.
+
 | UX e conversione | SEO | Non vedenti |
 |---|---|---|
 | <img src="docs/img/pannello-ux.png" width="260" alt="Scheda UX con voto 88 e barre per categoria"> | <img src="docs/img/pannello-seo.png" width="260" alt="Scheda SEO con voto 71 e anteprima del risultato su Google"> | <img src="docs/img/pannello-non-vedenti.png" width="260" alt="Scheda Non vedenti con consigli e testi pronti"> |

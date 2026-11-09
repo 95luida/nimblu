@@ -3655,7 +3655,7 @@ window.__MASCOT_SRC = function (opts) {
     // durante la rissa: "basta" o le mosse di Nimblu
     if (F) { var fr = fightChat(q); if (fr) { say(fr); logMsg('nimblu', fr); return; } }
     // comandi che devono funzionare sempre, anche senza AI
-    if (opts.ai && !FIGHT_Q.test(q) && !/pallina|\bpalla\b|lanciamela|corri\b|corsa pazza|zoomies|scatenat|zitto|silenzio|basta parlare|non parlare|^parla|chiacchier|ridai|restituisci|sputa|non mangiare|smetti di mangiare|torna a mangiare|puoi mangiare|barra|cronologia|non vedent|ciech|cieco|ipovedent|screen ?reader|\bgeo\b|\baeo\b|llms\.txt/i.test(q) && !MOB_Q.test(q)) { askAi(q, force); return; }
+    if (opts.ai && !FIGHT_Q.test(q) && !/pallina|\bpalla\b|lanciamela|corri\b|corsa pazza|zoomies|scatenat|zitto|silenzio|basta parlare|non parlare|^parla|chiacchier|ridai|restituisci|sputa|non mangiare|smetti di mangiare|torna a mangiare|puoi mangiare|barra|cronologia|non vedent|ciech|cieco|ipovedent|screen ?reader|\bgeo\b|\baeo\b|llms\.txt|\breport\b/i.test(q) && !MOB_Q.test(q)) { askAi(q, force); return; }
     say('...');
     M.reply = { q: q, t: 30 };
   }
@@ -3799,6 +3799,11 @@ window.__MASCOT_SRC = function (opts) {
         later(startBallChase, 300); return B.held === 'nimblu' ? 'Ce l\'ho io! 😸' : 'Vado a prenderla! 🎾';
       }],
       [MOB_Q, function () { later(function () { openUx(false, null, true); }, 400); return 'Guardo la pagina come su un telefono... 📱'; }],
+      [/\breport\b|esporta.{0,20}(controll|avvis|consigl|risultat)|scarica.{0,20}(avvis|consigl|risultat|controll)/, function () {
+        var fmt = /\bpdf\b/.test(t) ? 'pdf' : /\bword\b|\bdocx?\b/.test(t) ? 'docx' : /\btxt\b|\btesto\b/.test(t) ? 'txt' : 'html';
+        later(function () { if (!ux.list) { runAudits(); geoFetch(); } downloadReport(fmt); }, 300);
+        return 'Preparo il report' + { html: '', pdf: ' in PDF', docx: ' in Word', txt: ' come testo' }[fmt] + ' con tutti gli avvisi... 📄';
+      }],
       [/\baeo\b|answer engine|featured snippet|snippet in evidenza|risposta in evidenza|riquadr[io] in evidenza|assistent[ei] vocal|ricerca vocale|ricerche vocali|alexa|siri|google assistant|le persone chiedono anche|people also ask/, function () { later(function () { openUx(false, 'aeo'); }, 400); return 'Vediamo se la pagina sa rispondere in breve... 🎯'; }],
       [/\bgeo\b|generative engine|chatgpt|perplexity|gemini|ai overview|riassunt[io] (ai|dell.ai)|motori (di ricerca )?(ai|generativ)|\bllm\b|llms\.txt|(trovare|citare|citat[oa]) dall[ae]? (ai|intelligenz)/, function () { later(function () { openUx(false, 'geo'); }, 400); return 'Guardo la pagina con gli occhi delle AI... 🤖'; }],
       [/non vedent|ciech|cieco|ipovedent|screen ?reader|lettore di schermo|accessibil|testi alternativ|\balt\b|descrizion[ei] (delle |alle )?immagin/, function () { later(function () { openUx(false, 'a11y'); }, 400); return 'Ti dico come migliorare la pagina per chi non vede... ♿'; }],
@@ -6400,6 +6405,12 @@ window.__MASCOT_SRC = function (opts) {
     '#__nimblu_ux summary{cursor:pointer;margin:0 0 4px;font:700 11px/1.3 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:#2f9e6a}' +
     '#__nimblu_ux .tabs button{padding:6px 2px;gap:3px;white-space:nowrap;font-size:11.5px}' +
     '#__nimblu_ux .tabs{gap:2px}#__nimblu_ux .tabs .score{padding:3px 4px}' +
+    '#__nimblu_ux .rep{display:block;width:auto;padding:6px 10px;background:#e2eaf7;border:0;border-radius:999px;font:700 12px/1 system-ui,-apple-system,sans-serif;color:#22314f;white-space:nowrap}' +
+    '#__nimblu_ux .rep:hover,#__nimblu_ux .rep[aria-expanded=true]{background:#cfdcf0}' +
+    '#__nimblu_ux .repfmt{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:8px;margin:4px 0 6px;background:#e2eaf7;border-radius:11px}' +
+    '#__nimblu_ux .repfmt span{grid-column:1 / -1;font:600 11.5px/1.35 system-ui,sans-serif;color:#4a5d82;margin:0 2px 2px}' +
+    '#__nimblu_ux .repfmt button{display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 4px;border:0;background:#fff;font:700 12px/1.2 system-ui,-apple-system,sans-serif;color:#22314f}' +
+    '#__nimblu_ux .repfmt button:hover{background:#f5f8fd;box-shadow:0 0 0 1px #4f74b3}' +
     '#__nimblu_ux .mode{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:3px;background:#e2eaf7;border-radius:11px;margin:2px 0 0}' +
     '#__nimblu_ux .mode button{display:flex;align-items:center;justify-content:center;gap:5px;padding:5px 4px;border:0;background:transparent;font:700 12px/1.2 system-ui,-apple-system,sans-serif;color:#22314f}' +
     '#__nimblu_ux .mode button[aria-pressed=true]{background:#2d3e63;color:#fff}' +
@@ -6565,7 +6576,7 @@ window.__MASCOT_SRC = function (opts) {
   function scoreBadge(sc) { return '<span class="score" style="background:' + (sc >= 80 ? '#2f9e6a' : sc >= 55 ? '#e08a1e' : '#d64545') + '">' + sc + '</span>'; }
   function renderUx() {
     var tab = curTab();
-    var html = '<div class="hd"><b>🔍 Controllo della pagina</b><button type="button" class="x" data-ux="close" aria-label="Chiudi">✕</button></div>' + modeHtml() +
+    var html = '<div class="hd"><b>🔍 Controllo della pagina</b><button type="button" class="rep" data-ux="report" title="Scarica un file con tutti gli avvisi e i consigli delle cinque schede: pagina web, PDF, Word o testo" aria-expanded="' + !!ux.repOpen + '">📄 Report</button><button type="button" class="x" data-ux="close" aria-label="Chiudi">✕</button></div>' + repFmtHtml() + modeHtml() +
       '<div class="tabs"><button type="button" data-tab="ux" aria-pressed="' + (tab === 'ux') + '" title="Usabilità e conversione">UX ' + scoreBadge(uxScore()) + '</button>' +
       '<button type="button" data-tab="seo" aria-pressed="' + (tab === 'seo') + '">SEO ' + scoreBadge(seoScore()) + '</button>' +
       '<button type="button" data-tab="geo" aria-pressed="' + (tab === 'geo') + '" title="GEO: farsi trovare e citare da ChatGPT, Perplexity, Gemini e dai riassunti AI di Google">GEO ' + scoreBadge(geoScore()) + '</button>' +
@@ -6623,6 +6634,445 @@ window.__MASCOT_SRC = function (opts) {
       (mob.ratio < 0.5 ? ' <b>Senza JavaScript si vede solo il ' + Math.round(mob.ratio * 100) + '% del testo: alcuni risultati potrebbero non essere giusti.</b>' : '') +
       (mob.hidden ? ' Allarga la finestra per vedere l\'anteprima accanto al pannello.' : ' Clicca una voce: la vedi nell\'anteprima.') + '</p>';
     return h;
+  }
+  // ---------- report da scaricare ----------
+  // Tutto quello che mostra il pannello, in un file: i voti delle cinque schede e delle categorie, poi per ogni scheda
+  // gli avvisi e i consigli dal più importante, con il dettaglio, i punti che si guadagnano, gli elementi coinvolti
+  // (testo e selettore CSS per ritrovarli) e i testi pronti. reportData() raccoglie i dati una volta sola; poi ogni
+  // formato li scrive a modo suo: pagina web (HTML), PDF, Word (.docx) e testo (.txt). Tutto nel browser, senza librerie.
+  var REP_TABS = [['ux', 'UX e conversione'], ['seo', 'SEO'], ['geo', 'GEO · farsi citare dalle AI'], ['aeo', 'AEO · risposte dirette e vocali'], ['a11y', 'Non vedenti']];
+  var REP_FMT = { html: ['🌐', 'Pagina web', 'html'], pdf: ['📕', 'PDF', 'pdf'], docx: ['📘', 'Word', 'docx'], txt: ['📝', 'Testo', 'txt'] };
+  // selettore CSS breve per ritrovare l'elemento (fino a 4 livelli, si ferma a un id)
+  function cssPath(el) {
+    var parts = [], d = el.ownerDocument;
+    for (var e = el, k = 0; e && e.nodeType === 1 && e !== d.body && e !== d.documentElement && k < 4; e = e.parentElement, k++) {
+      var tag = e.tagName.toLowerCase();
+      if (e.id && !/^\d/.test(e.id)) { parts.unshift(tag + '#' + e.id); break; }
+      var cls = [].filter.call(e.classList, function (c) { return /^[a-z_-][\w-]*$/i.test(c) && c.length < 40; }).slice(0, 2), s = tag + (cls.length ? '.' + cls.join('.') : '');
+      var p = e.parentElement, same = p ? [].filter.call(p.children, function (c) { return c.tagName === e.tagName; }) : [];
+      if (same.length > 1) s += ':nth-of-type(' + (same.indexOf(e) + 1) + ')';
+      parts.unshift(s);
+    }
+    return parts.join(' > ');
+  }
+  function gainOf(f) { return Math.round((f.w || 0) * (1 - (f.p != null ? f.p : PTS[f.sev]))); }
+  function repCol(sc) { return sc >= 80 ? '#2f9e6a' : sc >= 55 ? '#e08a1e' : '#d64545'; }
+  function reportData() {
+    var now = new Date(), mobile = !!(ux.mobile && mob.state === 'ready'), cnt = { error: 0, warn: 0, tip: 0, ok: 0 };
+    var d = {
+      host: location.hostname.replace(/^www\./, '') || 'pagina', url: location.href.split('#')[0], title: (window.document.title || '').trim(),
+      version: opts.version || '', mobile: mobile,
+      view: mobile ? 'Telefono, pagina larga ' + mob.w + ' px senza JavaScript' : 'Computer, finestra ' + innerWidth + '×' + innerHeight + ' px',
+      date: now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }), time: now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+      geoPending: geo.net.state === 'loading',
+      ai: ux.ai && ux.ai.tips && ux.ai.tips.length ? { q: ux.ai.q, tips: ux.ai.tips } : null
+    };
+    d.title = d.title || d.host;
+    d.tabs = REP_TABS.map(function (t) {
+      var L = tabList(t[0]);
+      L.forEach(function (f) { cnt[f.sev]++; });
+      return {
+        k: t[0], name: t[1], short: t[1].split(' · ')[0], sc: scoreOf(L),
+        cats: catScores(t[0]).map(function (c) { return { icon: c.icon, name: c.name, sc: c.sc }; }),
+        serp: t[0] === 'seo' && seo.info ? { title: seo.info.title || '', desc: seo.info.desc || '' } : null,
+        groups: ['error', 'warn', 'tip'].map(function (sev) {
+          return { sev: sev, h: SEV[sev].h, c: SEV[sev].c, items: L.filter(function (f) { return f.sev === sev; }).sort(function (a, b) { return gainOf(b) - gainOf(a); }).map(function (f) {
+            var els = f.els || [];
+            return {
+              title: f.label && f.label !== f.title ? f.label + ': ' + f.title : f.title, cat: f.cat, gain: gainOf(f), value: f.value || '', detail: f.detail || '',
+              els: els.slice(0, 8).map(function (el, k) { return { desc: elDesc(el), sel: cssPath(el), sug: (f.sug && f.sug[k]) || '' }; }), more: Math.max(0, els.length - 8),
+              code: f.code || '', where: f.where || ''
+            };
+          }) };
+        }).filter(function (g) { return g.items.length; }),
+        ok: L.filter(function (f) { return f.sev === 'ok'; }).map(function (f) { return { title: f.title, detail: f.detail || '' }; })
+      };
+    });
+    d.cnt = cnt; d.todo = cnt.error + cnt.warn + cnt.tip;
+    return d;
+  }
+  var REP_NOTE = 'Controlli automatici con regole fisse: aiutano a trovare i problemi più comuni, ma non sostituiscono un test con persone vere. I testi proposti vanno riletti prima di usarli.';
+
+  // --- pagina web: si apre in qualsiasi browser e si stampa in PDF ---
+  function repHtml(d) {
+    var h = '<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>Report Nimblu · ' + esc(d.host) + '</title><style>' +
+      ':root{--ink:#22314f;--muted:#5b6f96;--line:#dbe4f3;--bg:#f5f8fd;--blue:#4f74b3}' +
+      '*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.wrap{max-width:900px;margin:0 auto;padding:32px 20px 56px}a{color:var(--blue)}' +
+      'header{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 26px}' +
+      '.k{margin:0 0 6px;font:700 12px/1.3 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}' +
+      'h1{margin:0 0 6px;font-size:26px;line-height:1.2;text-wrap:balance}.u{margin:0;color:var(--muted);font-size:14px;overflow-wrap:anywhere}' +
+      '.scores{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:20px 0 14px}' +
+      '.sc{border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-decoration:none;color:var(--ink)}.sc b{display:block;font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}.sc span{font-size:13px;color:var(--muted)}' +
+      '.sum{margin:0;font-size:14px;color:var(--muted)}.sum i{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 4px 0 10px}.sum i:first-child{margin-left:0}' +
+      'section{margin-top:28px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 26px}' +
+      'h2{margin:0 0 14px;font-size:21px;display:flex;align-items:center;gap:10px}h2 .n{font-size:15px;color:#fff;border-radius:999px;padding:2px 10px}' +
+      '.cats{display:grid;gap:4px;margin:0 0 16px;max-width:520px}.cat{display:grid;grid-template-columns:150px 1fr 34px;gap:10px;align-items:center;font-size:13px}' +
+      '.bar{height:7px;border-radius:4px;background:#e8eef8;overflow:hidden}.bar i{display:block;height:100%}.cat b{text-align:right;font-variant-numeric:tabular-nums}' +
+      'h3{margin:18px 0 8px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}' +
+      'ol{margin:0;padding:0;list-style:none;display:grid;gap:8px}.f{border:1px solid var(--line);border-left:4px solid;border-radius:10px;padding:10px 14px;break-inside:avoid}' +
+      '.fh{display:flex;gap:10px;align-items:baseline;justify-content:space-between}.fh b{font-size:15px}.fh span{flex:none;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}' +
+      '.f p{margin:4px 0 0}.v{color:var(--muted);font-size:14px}.wh{color:#6a4fb3;font-size:14px}' +
+      '.els{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:4px;font-size:13px}.els li{background:var(--bg);border-radius:8px;padding:6px 9px;overflow-wrap:anywhere}' +
+      '.els code,pre{font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}.els .sel{color:var(--muted)}.els .sug{display:block;color:#1f6b45;margin-top:2px}' +
+      'pre{margin:8px 0 0;padding:9px 11px;background:#f2f6fc;border:1px dashed #b9c8e4;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;color:#1f6b45}' +
+      '.serp{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 14px;font-family:arial,sans-serif;max-width:620px}.serp .st{color:#1a0dab;font-size:18px}.serp .sd{color:#4d5156;font-size:13px}' +
+      'details{margin-top:14px}summary{cursor:pointer;font:700 13px system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#2f9e6a}' +
+      'details ul{margin:8px 0 0;padding-left:18px;font-size:14px}details li{margin:3px 0}details li span{color:var(--muted)}' +
+      'footer{margin-top:28px;color:var(--muted);font-size:13px}' +
+      '@media (max-width:640px){.scores{grid-template-columns:repeat(2,1fr)}.cat{grid-template-columns:110px 1fr 30px}section,header{padding:18px}}' +
+      '@media print{body{background:#fff}section,header{border:0;padding:0}section{margin-top:22px}.wrap{padding:0}}' +
+      '</style></head><body><div class="wrap"><header>' +
+      '<p class="k">Report di Nimblu' + (d.version ? ' ' + esc(d.version) : '') + ' · ' + esc(d.view) + '</p>' +
+      '<h1>' + esc(d.title) + '</h1><p class="u"><a href="' + esc(d.url) + '">' + esc(d.url) + '</a> · controllata il ' + esc(d.date) + ' alle ' + esc(d.time) + '</p>' +
+      '<div class="scores">' + d.tabs.map(function (t) { return '<a class="sc" href="#' + t.k + '"><b style="color:' + repCol(t.sc) + '">' + t.sc + '</b><span>' + esc(t.short) + '</span></a>'; }).join('') + '</div>' +
+      '<p class="sum">' + ['error', 'warn', 'tip', 'ok'].map(function (s) { return '<i style="background:' + SEV[s].c + '"></i>' + d.cnt[s] + ' ' + (s === 'ok' ? 'controlli superati' : SEV[s].h.toLowerCase()); }).join(' ') + '</p>' +
+      (d.geoPending ? '<p class="sum">La lettura di robots.txt e llms.txt per la scheda GEO non era ancora finita: alcune righe GEO potrebbero mancare.</p>' : '') +
+      '</header>';
+    if (d.ai) h += '<section><h2>✨ I consigli dell\'AI</h2><p class="v">Hai chiesto: «' + esc(d.ai.q) + '»</p><ol>' + d.ai.tips.map(function (t) {
+      return '<li class="f" style="border-left-color:#6a4fb3"><div class="fh"><b>' + esc(t.titolo) + '</b></div>' + (t.perche ? '<p>' + esc(t.perche) + '</p>' : '') + (t.come ? '<p>→ ' + esc(t.come) + '</p>' : '') + '</li>';
+    }).join('') + '</ol></section>';
+    d.tabs.forEach(function (t) {
+      h += '<section id="' + t.k + '"><h2>' + esc(t.name) + ' <span class="n" style="background:' + repCol(t.sc) + '">' + t.sc + '/100</span></h2>' +
+        '<div class="cats">' + t.cats.map(function (c) { return '<div class="cat"><span>' + c.icon + ' ' + esc(c.name) + '</span><span class="bar"><i style="width:' + c.sc + '%;background:' + repCol(c.sc) + '"></i></span><b style="color:' + repCol(c.sc) + '">' + c.sc + '</b></div>'; }).join('') + '</div>';
+      if (t.serp) h += '<div class="serp"><div class="st">' + esc(t.serp.title || '(senza titolo)') + '</div><div class="sd">' + esc(t.serp.desc || 'Nessuna meta description') + '</div></div>';
+      t.groups.forEach(function (g) {
+        h += '<h3 style="color:' + g.c + '">' + g.h + ' (' + g.items.length + ')</h3><ol>' + g.items.map(function (f) {
+          var rows = f.els.map(function (e) { return '<li>' + esc(e.desc) + ' <code class="sel">' + esc(e.sel) + '</code>' + (e.sug ? '<code class="sug">→ ' + esc(e.sug) + '</code>' : '') + '</li>'; }).join('') + (f.more ? '<li>+ altri ' + f.more + ' elementi</li>' : '');
+          return '<li class="f" style="border-left-color:' + g.c + '"><div class="fh"><b>' + esc(f.title) + '</b><span>' + esc(f.cat) + ' · +' + f.gain + ' punti</span></div>' +
+            (f.value ? '<p class="v">Sulla pagina: ' + esc(f.value) + '</p>' : '') + '<p>' + esc(f.detail) + '</p>' +
+            (rows ? '<ul class="els">' + rows + '</ul>' : '') + (f.code ? '<pre>' + esc(f.code) + '</pre>' : '') + (f.where ? '<p class="wh">💡 ' + esc(f.where) + '</p>' : '') + '</li>';
+        }).join('') + '</ol>';
+      });
+      if (t.ok.length) h += '<details><summary>' + SEV.ok.h + ' (' + t.ok.length + ')</summary><ul>' + t.ok.map(function (f) { return '<li>' + esc(f.title) + ' <span>— ' + esc(f.detail) + '</span></li>'; }).join('') + '</ul></details>';
+      if (!t.groups.length) h += '<p class="v">Niente da sistemare in questa scheda. 👍</p>';
+      h += '</section>';
+    });
+    return h + '<footer>' + esc(REP_NOTE) + ' Creato da Nimblu · <a href="https://www.dalpuntoweb.it/nimblu/">dalpuntoweb.it/nimblu</a></footer></div></body></html>';
+  }
+
+  // --- testo semplice ---
+  function repTxt(d) {
+    var o = [], line = function (s) { o.push(s == null ? '' : s); }, rule = new Array(61).join('=');
+    line('REPORT DI NIMBLU' + (d.version ? ' ' + d.version : '')); line(d.title); line(d.url);
+    line('Controllata il ' + d.date + ' alle ' + d.time + ' · ' + d.view); line();
+    line('Voti: ' + d.tabs.map(function (t) { return t.short + ' ' + t.sc + '/100'; }).join(' · '));
+    line(['error', 'warn', 'tip'].map(function (s) { return d.cnt[s] + ' ' + SEV[s].h.toLowerCase(); }).join(' · ') + ' · ' + d.cnt.ok + ' controlli superati');
+    if (d.geoPending) line('(La lettura di robots.txt e llms.txt per la scheda GEO non era ancora finita: alcune righe GEO potrebbero mancare.)');
+    if (d.ai) {
+      line(); line(rule); line('CONSIGLI DELL\'AI'); line(rule); line('Hai chiesto: «' + d.ai.q + '»');
+      d.ai.tips.forEach(function (t, i) { line(); line((i + 1) + '. ' + t.titolo); if (t.perche) line('   ' + t.perche); if (t.come) line('   → ' + t.come); });
+    }
+    d.tabs.forEach(function (t) {
+      line(); line(rule); line(t.name.toUpperCase() + ' — ' + t.sc + '/100'); line(rule);
+      line('Categorie: ' + t.cats.map(function (c) { return c.name + ' ' + c.sc; }).join(' · '));
+      if (t.serp) { line('Su Google: ' + (t.serp.title || '(senza titolo)')); line('           ' + (t.serp.desc || 'nessuna meta description')); }
+      t.groups.forEach(function (g) {
+        line(); line(g.h.toUpperCase() + ' (' + g.items.length + ')');
+        g.items.forEach(function (f, i) {
+          line(); line((i + 1) + '. ' + f.title + '  [' + f.cat + ' · +' + f.gain + ' punti]');
+          if (f.value) line('   Sulla pagina: ' + f.value);
+          line('   ' + f.detail);
+          f.els.forEach(function (e) { line('   - ' + e.desc + '  (' + e.sel + ')'); if (e.sug) line('     → ' + e.sug); });
+          if (f.more) line('   - + altri ' + f.more + ' elementi');
+          if (f.code) { line('   Testo pronto:'); f.code.split('\n').forEach(function (l) { line('     ' + l); }); }
+          if (f.where) line('   Dove: ' + f.where);
+        });
+      });
+      if (t.ok.length) { line(); line(SEV.ok.h.toUpperCase() + ' (' + t.ok.length + ')'); t.ok.forEach(function (f) { line(' ✓ ' + f.title + ' — ' + f.detail); }); }
+      if (!t.groups.length) line('Niente da sistemare in questa scheda.');
+    });
+    line(); line(REP_NOTE); line('Creato da Nimblu · https://www.dalpuntoweb.it/nimblu/');
+    return o.join('\r\n');
+  }
+
+  // --- Word (.docx): un archivio zip con l'XML di Word, scritto qui (file salvati senza compressione) ---
+  var CRC_T = null;
+  function crc32(u8) {
+    if (!CRC_T) { CRC_T = new Uint32Array(256); for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; CRC_T[n] = c >>> 0; } }
+    var x = 0xFFFFFFFF;
+    for (var i = 0; i < u8.length; i++) x = CRC_T[(x ^ u8[i]) & 255] ^ (x >>> 8);
+    return (x ^ 0xFFFFFFFF) >>> 0;
+  }
+  function zipBlob(files, type) {
+    var enc = new TextEncoder(), parts = [], central = [], off = 0, cdLen = 0;
+    files.forEach(function (f) {
+      var nm = enc.encode(f[0]), data = typeof f[1] === 'string' ? enc.encode(f[1]) : f[1], crc = crc32(data), sz = data.length;
+      var h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(12, 0x21, true);
+      h.setUint32(14, crc, true); h.setUint32(18, sz, true); h.setUint32(22, sz, true); h.setUint16(26, nm.length, true);
+      parts.push(new Uint8Array(h.buffer), nm, data);
+      var c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(14, 0x21, true);
+      c.setUint32(16, crc, true); c.setUint32(20, sz, true); c.setUint32(24, sz, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+      central.push(new Uint8Array(c.buffer), nm);
+      off += 30 + nm.length + sz; cdLen += 46 + nm.length;
+    });
+    var e = new DataView(new ArrayBuffer(22));
+    e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cdLen, true); e.setUint32(16, off, true);
+    return new Blob(parts.concat(central, [new Uint8Array(e.buffer)]), { type: type });
+  }
+  function repDocx(d) {
+    var X = function (s) { return String(s == null ? '' : s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    var hex = function (c) { return c.replace('#', '').toUpperCase(); };
+    // run: {t, b, i, color, mono, sz}; l'ordine dei tag dentro rPr e pPr è quello che Word si aspetta
+    function run(r) {
+      if (typeof r === 'string') r = { t: r };
+      var pr = (r.mono ? '<w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New"/>' : '') + (r.b ? '<w:b/>' : '') + (r.i ? '<w:i/>' : '') +
+        (r.color ? '<w:color w:val="' + hex(r.color) + '"/>' : '') + (r.sz ? '<w:sz w:val="' + r.sz + '"/><w:szCs w:val="' + r.sz + '"/>' : '');
+      return '<w:r>' + (pr ? '<w:rPr>' + pr + '</w:rPr>' : '') + String(r.t).split('\n').map(function (l, k) { return (k ? '<w:br/>' : '') + '<w:t xml:space="preserve">' + X(l) + '</w:t>'; }).join('') + '</w:r>';
+    }
+    function par(runs, o) {
+      o = o || {};
+      var pr = (o.style ? '<w:pStyle w:val="' + o.style + '"/>' : '') + (o.keep ? '<w:keepNext/>' : '') +
+        (o.bar ? '<w:pBdr><w:left w:val="single" w:sz="18" w:space="8" w:color="' + hex(o.bar) + '"/></w:pBdr>' : '') +
+        (o.fill ? '<w:shd w:val="clear" w:color="auto" w:fill="' + o.fill + '"/>' : '') +
+        (o.before != null || o.after != null ? '<w:spacing' + (o.before != null ? ' w:before="' + o.before + '"' : '') + (o.after != null ? ' w:after="' + o.after + '"' : '') + '/>' : '') +
+        (o.ind ? '<w:ind w:left="' + o.ind + '"/>' : '');
+      return '<w:p>' + (pr ? '<w:pPr>' + pr + '</w:pPr>' : '') + [].concat(runs).map(run).join('') + '</w:p>';
+    }
+    var b = [];
+    b.push(par([{ t: 'REPORT DI NIMBLU' + (d.version ? ' ' + d.version : '') + ' · ' + d.view.toUpperCase(), b: true, color: '#4f74b3', sz: 16 }], { after: 40 }));
+    b.push(par(d.title, { style: 'Title' }));
+    b.push(par([{ t: d.url + ' · controllata il ' + d.date + ' alle ' + d.time, color: '#5b6f96', sz: 18 }], { after: 200 }));
+    b.push(par(d.tabs.map(function (t, k) { return [{ t: (k ? '   ' : '') + t.short + ' ', color: '#5b6f96' }, { t: t.sc + '/100', b: true, color: repCol(t.sc) }]; }).reduce(function (a, x) { return a.concat(x); }, []), { after: 60 }));
+    b.push(par([{ t: ['error', 'warn', 'tip'].map(function (s) { return d.cnt[s] + ' ' + SEV[s].h.toLowerCase(); }).join(' · ') + ' · ' + d.cnt.ok + ' controlli superati', color: '#5b6f96', sz: 18 }]));
+    if (d.geoPending) b.push(par([{ t: 'La lettura di robots.txt e llms.txt per la scheda GEO non era ancora finita: alcune righe GEO potrebbero mancare.', i: true, color: '#5b6f96', sz: 18 }]));
+    if (d.ai) {
+      b.push(par('I consigli dell\'AI', { style: 'Heading1' }));
+      b.push(par([{ t: 'Hai chiesto: «' + d.ai.q + '»', i: true, color: '#5b6f96' }]));
+      d.ai.tips.forEach(function (t) { b.push(par([{ t: t.titolo, b: true }], { bar: '#6a4fb3', keep: true, after: 20 })); if (t.perche) b.push(par(t.perche, { bar: '#6a4fb3', after: 20 })); if (t.come) b.push(par('→ ' + t.come, { bar: '#6a4fb3' })); });
+    }
+    d.tabs.forEach(function (t) {
+      b.push(par([{ t: t.name + '   ' }, { t: t.sc + '/100', color: repCol(t.sc) }], { style: 'Heading1' }));
+      b.push(par(t.cats.map(function (c, k) { return [{ t: (k ? '   ·   ' : '') + c.name + ' ' }, { t: String(c.sc), b: true, color: repCol(c.sc) }]; }).reduce(function (a, x) { return a.concat(x); }, []), { after: 120 }));
+      if (t.serp) {
+        b.push(par([{ t: t.serp.title || '(senza titolo)', color: '#1a0dab', sz: 24 }], { after: 0 }));
+        b.push(par([{ t: t.serp.desc || 'Nessuna meta description', color: '#4d5156', sz: 18 }]));
+      }
+      t.groups.forEach(function (g) {
+        b.push(par([{ t: g.h.toUpperCase() + ' (' + g.items.length + ')', color: g.c }], { style: 'Heading2' }));
+        g.items.forEach(function (f) {
+          b.push(par([{ t: f.title, b: true }, { t: '   ' + f.cat + ' · +' + f.gain + ' punti', color: '#5b6f96', sz: 17 }], { bar: g.c, keep: true, before: 160, after: 30 }));
+          if (f.value) b.push(par([{ t: 'Sulla pagina: ' + f.value, color: '#5b6f96' }], { bar: g.c, after: 30 }));
+          b.push(par(f.detail, { bar: g.c, after: 40 }));
+          f.els.forEach(function (e) {
+            b.push(par([{ t: e.desc + '  ' }, { t: e.sel, mono: true, color: '#5b6f96', sz: 16 }].concat(e.sug ? [{ t: '\n→ ' + e.sug, mono: true, color: '#1f6b45', sz: 17 }] : []), { bar: g.c, fill: 'F5F8FD', ind: 200, after: 20 }));
+          });
+          if (f.more) b.push(par([{ t: '+ altri ' + f.more + ' elementi', color: '#5b6f96' }], { bar: g.c, ind: 200, after: 20 }));
+          if (f.code) b.push(par([{ t: f.code, mono: true, color: '#1f6b45', sz: 16 }], { bar: g.c, fill: 'F2F6FC', after: 40 }));
+          if (f.where) b.push(par([{ t: '💡 ' + f.where, color: '#6a4fb3' }], { bar: g.c }));
+        });
+      });
+      if (t.ok.length) {
+        b.push(par([{ t: SEV.ok.h.toUpperCase() + ' (' + t.ok.length + ')', color: SEV.ok.c }], { style: 'Heading2' }));
+        t.ok.forEach(function (f) { b.push(par([{ t: '✓ ' + f.title, b: true }, { t: ' — ' + f.detail, color: '#5b6f96' }], { after: 30 })); });
+      }
+      if (!t.groups.length) b.push(par([{ t: 'Niente da sistemare in questa scheda.', i: true }]));
+    });
+    b.push(par([{ t: REP_NOTE + ' Creato da Nimblu · https://www.dalpuntoweb.it/nimblu/', color: '#5b6f96', sz: 17 }], { before: 400 }));
+    var W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"', HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+    var doc = HEAD + '<w:document ' + W + '><w:body>' + b.join('') +
+      '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>';
+    var sty = function (id, name, sz, color, before, caps) {
+      return '<w:style w:type="paragraph" w:styleId="' + id + '"><w:name w:val="' + name + '"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/>' +
+        '<w:pPr><w:keepNext/><w:spacing w:before="' + before + '" w:after="120"/></w:pPr><w:rPr><w:b/>' + (caps ? '<w:caps/>' : '') + '<w:color w:val="' + color + '"/><w:sz w:val="' + sz + '"/><w:szCs w:val="' + sz + '"/></w:rPr></w:style>';
+    };
+    var styles = HEAD + '<w:styles ' + W + '><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Calibri" w:cs="Calibri"/><w:color w:val="22314F"/><w:sz w:val="21"/><w:szCs w:val="21"/><w:lang w:val="it-IT"/></w:rPr></w:rPrDefault>' +
+      '<w:pPrDefault><w:pPr><w:spacing w:after="80" w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>' +
+      '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>' +
+      sty('Title', 'Title', 40, '22314F', 0) + sty('Heading1', 'heading 1', 30, '22314F', 480) + sty('Heading2', 'heading 2', 19, '5B6F96', 280, true) + '</w:styles>';
+    var NS = 'http://schemas.openxmlformats.org/', REL = NS + 'package/2006/relationships';
+    return zipBlob([
+      ['[Content_Types].xml', HEAD + '<Types xmlns="' + NS + 'package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>' +
+        '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>'],
+      ['_rels/.rels', HEAD + '<Relationships xmlns="' + REL + '"><Relationship Id="rId1" Type="' + NS + 'officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'],
+      ['word/_rels/document.xml.rels', HEAD + '<Relationships xmlns="' + REL + '"><Relationship Id="rId1" Type="' + NS + 'officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'],
+      ['word/document.xml', doc],
+      ['word/styles.xml', styles]
+    ], 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  }
+
+  // --- PDF: impaginato qui con i caratteri standard di ogni lettore PDF (Helvetica e Courier, codifica WinAnsi) ---
+  var HELV = '278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584,0,556,0,222,556,333,1000,556,556,333,1000,667,333,1000,0,611,0,0,222,222,333,333,350,556,1000,333,1000,500,333,944,0,500,667,278,333,556,556,556,556,260,556,333,737,370,556,584,333,737,333,400,584,333,333,333,556,537,278,333,333,365,556,834,834,834,611,667,667,667,667,667,667,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,500,556,556,556,556,278,278,278,278,556,556,556,556,556,556,556,584,611,556,556,556,556,500,556,500'.split(',').map(Number);
+  var HEBO = '278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584,0,556,0,278,556,500,1000,556,556,333,1000,667,333,1000,0,611,0,0,278,278,500,500,350,556,1000,333,1000,556,333,944,0,500,667,278,333,556,556,556,556,280,556,333,737,370,556,584,333,737,333,400,584,333,333,333,611,556,278,333,333,365,556,834,834,834,611,722,722,722,722,722,722,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,556,556,556,556,556,278,278,278,278,611,611,611,611,611,611,611,584,611,611,611,611,611,556,611,556'.split(',').map(Number);
+  var WIN = { '€': 128, '‚': 130, 'ƒ': 131, '„': 132, '…': 133, '†': 134, '‡': 135, 'ˆ': 136, '‰': 137, 'Š': 138, '‹': 139, 'Œ': 140, 'Ž': 142, '‘': 145, '’': 146, '“': 147, '”': 148, '•': 149, '–': 150, '—': 151, '˜': 152, '™': 153, 'š': 154, '›': 155, 'œ': 156, 'ž': 158, 'Ÿ': 159 };
+  // da Unicode ai byte WinAnsi (una stringa di caratteri 0-255); frecce e simboli diventano testo, emoji e il resto spariscono
+  function winAnsi(s) {
+    s = String(s == null ? '' : s).replace(/→/g, '->').replace(/←/g, '<-').replace(/[↗↘]/g, '').replace(/≥/g, '>=').replace(/≤/g, '<=').replace(/[✓✔]/g, '').replace(/\t/g, '    ').replace(/[​-‏️]/g, '');
+    var o = '';
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i], c = s.charCodeAt(i);
+      if (c >= 32 && c < 127) o += ch;
+      else if (c >= 160 && c < 256) o += ch;
+      else if (WIN[ch]) o += String.fromCharCode(WIN[ch]);
+      else if (c === 10) o += '\n';
+    }
+    return o;
+  }
+  function repPdf(d) {
+    var PW = 595.28, PH = 841.89, M = 50, pages = [], cur, y;
+    var rgb = function (c) { c = c.replace('#', ''); return [0, 2, 4].map(function (k) { return (parseInt(c.substr(k, 2), 16) / 255).toFixed(3); }).join(' '); };
+    var wid = function (s, f, size) { var w = 0; for (var i = 0; i < s.length; i++) { var c = s.charCodeAt(i); w += f === 3 ? 600 : ((f === 2 ? HEBO : HELV)[c - 32] || 556); } return w * size / 1000; };
+    var pstr = function (s) { return '(' + s.replace(/[\\()]/g, '\\$&') + ')'; };
+    function page() { cur = []; pages.push(cur); y = PH - M; }
+    function need(h) { if (y - h < M + 16) page(); }
+    // a capo per larghezza; le parole troppo lunghe (indirizzi, selettori) si spezzano a lettere
+    function wrap(s, f, size, maxW) {
+      var out = [];
+      s.split('\n').forEach(function (para) {
+        var lineS = '';
+        para.split(/( +)/).forEach(function (tok) {
+          if (!tok) return;
+          if (wid(lineS + tok, f, size) <= maxW) { lineS += tok; return; }
+          if (lineS.trim()) out.push(lineS.replace(/ +$/, ''));
+          lineS = /^ +$/.test(tok) ? '' : tok;
+          while (wid(lineS, f, size) > maxW) {
+            var k = lineS.length;
+            while (k > 1 && wid(lineS.slice(0, k), f, size) > maxW) k--;
+            out.push(lineS.slice(0, k)); lineS = lineS.slice(k);
+          }
+        });
+        out.push(lineS.replace(/ +$/, ''));
+      });
+      return out;
+    }
+    // o: f (1 normale, 2 grassetto, 3 Courier), size, color, x (rientro), lead, after, bar (colore della barra a sinistra), fill
+    function text(s, o) {
+      o = o || {};
+      var f = o.f || 1, size = o.size || 10, x = M + (o.x || 0), lead = o.lead || size * 1.38, lines = wrap(winAnsi(s), f, size, PW - M - x - (o.fill ? 6 : 0));
+      lines.forEach(function (l) {
+        need(lead);
+        if (o.fill) cur.push(rgb(o.fill) + ' rg ' + (x - 6).toFixed(2) + ' ' + (y - lead + 1).toFixed(2) + ' ' + (PW - M - x + 12).toFixed(2) + ' ' + lead.toFixed(2) + ' re f');
+        if (o.bar) cur.push(rgb(o.bar) + ' rg ' + (M - 0.5).toFixed(2) + ' ' + (y - lead + 1).toFixed(2) + ' 3 ' + lead.toFixed(2) + ' re f');
+        y -= lead;
+        if (l) cur.push('BT /F' + f + ' ' + size + ' Tf ' + rgb(o.color || '#22314f') + ' rg ' + x.toFixed(2) + ' ' + (y + lead - size).toFixed(2) + ' Td ' + pstr(l) + ' Tj ET');
+      });
+      y -= o.after || 0;
+    }
+    function runs(parts, o) { // una riga con pezzi di stile diverso (va bene per righe corte: voti, intestazioni)
+      var lead = o.lead || 16; need(lead); y -= lead;
+      var x = M + (o.x || 0);
+      parts.forEach(function (p) {
+        var s = winAnsi(p.t), size = p.size || 10, f = p.f || 1;
+        cur.push('BT /F' + f + ' ' + size + ' Tf ' + rgb(p.color || '#22314f') + ' rg ' + x.toFixed(2) + ' ' + (y + lead - size).toFixed(2) + ' Td ' + pstr(s) + ' Tj ET');
+        x += wid(s, f, size);
+      });
+      y -= o.after || 0;
+    }
+    page();
+    text('REPORT DI NIMBLU' + (d.version ? ' ' + d.version : '') + ' · ' + d.view.toUpperCase(), { f: 2, size: 8.5, color: '#4f74b3', after: 6 });
+    text(d.title, { f: 2, size: 20, lead: 25, after: 4 });
+    text(d.url, { size: 9, color: '#4f74b3' });
+    text('Controllata il ' + d.date + ' alle ' + d.time, { size: 9, color: '#5b6f96', after: 14 });
+    // i cinque voti in riquadri
+    var bw = (PW - 2 * M - 4 * 8) / 5;
+    need(52); y -= 52;
+    d.tabs.forEach(function (t, k) {
+      var bx = M + k * (bw + 8);
+      cur.push(rgb('#dbe4f3') + ' RG 0.8 w ' + bx.toFixed(2) + ' ' + y.toFixed(2) + ' ' + bw.toFixed(2) + ' 52 re S');
+      cur.push('BT /F2 20 Tf ' + rgb(repCol(t.sc)) + ' rg ' + (bx + 9).toFixed(2) + ' ' + (y + 25).toFixed(2) + ' Td ' + pstr(String(t.sc)) + ' Tj ET');
+      cur.push('BT /F1 8.5 Tf ' + rgb('#5b6f96') + ' rg ' + (bx + 9).toFixed(2) + ' ' + (y + 10).toFixed(2) + ' Td ' + pstr(winAnsi(t.short)) + ' Tj ET');
+    });
+    y -= 10;
+    runs(['error', 'warn', 'tip'].map(function (s) { return { t: d.cnt[s] + ' ' + SEV[s].h.toLowerCase() + '   ', color: SEV[s].c, size: 9.5 }; }).concat([{ t: d.cnt.ok + ' controlli superati', color: SEV.ok.c, size: 9.5 }]), { lead: 14, after: 4 });
+    if (d.geoPending) text('La lettura di robots.txt e llms.txt per la scheda GEO non era ancora finita: alcune righe GEO potrebbero mancare.', { size: 8.5, color: '#5b6f96' });
+    if (d.ai) {
+      y -= 14; text('I consigli dell\'AI', { f: 2, size: 15, lead: 20, after: 2 });
+      text('Hai chiesto: «' + d.ai.q + '»', { size: 9.5, color: '#5b6f96', after: 4 });
+      d.ai.tips.forEach(function (t) { text(t.titolo, { f: 2, size: 10.5, x: 10, bar: '#6a4fb3' }); if (t.perche) text(t.perche, { x: 10, bar: '#6a4fb3' }); if (t.come) text('-> ' + t.come, { x: 10, bar: '#6a4fb3', after: 6 }); });
+    }
+    d.tabs.forEach(function (t) {
+      y -= 16; need(80);
+      runs([{ t: t.name + '   ', f: 2, size: 15 }, { t: t.sc + '/100', f: 2, size: 15, color: repCol(t.sc) }], { lead: 20, after: 6 });
+      t.cats.forEach(function (c) {
+        need(13); y -= 13;
+        cur.push('BT /F1 9 Tf ' + rgb('#22314f') + ' rg ' + M + ' ' + (y + 3).toFixed(2) + ' Td ' + pstr(winAnsi(c.name)) + ' Tj ET');
+        cur.push(rgb('#e8eef8') + ' rg ' + (M + 130) + ' ' + (y + 4).toFixed(2) + ' 200 5 re f');
+        cur.push(rgb(repCol(c.sc)) + ' rg ' + (M + 130) + ' ' + (y + 4).toFixed(2) + ' ' + (2 * c.sc).toFixed(2) + ' 5 re f');
+        cur.push('BT /F2 9 Tf ' + rgb(repCol(c.sc)) + ' rg ' + (M + 340) + ' ' + (y + 3).toFixed(2) + ' Td ' + pstr(String(c.sc)) + ' Tj ET');
+      });
+      y -= 6;
+      if (t.serp) { need(34); text(t.serp.title || '(senza titolo)', { size: 11, color: '#1a0dab' }); text(t.serp.desc || 'Nessuna meta description', { size: 8.5, color: '#4d5156', after: 4 }); }
+      t.groups.forEach(function (g) {
+        y -= 8; need(40);
+        text(g.h.toUpperCase() + ' (' + g.items.length + ')', { f: 2, size: 9, color: g.c, after: 3 });
+        g.items.forEach(function (f) {
+          need(42); y -= 4;
+          text(f.title, { f: 2, size: 10.5, x: 10, bar: g.c });
+          text(f.cat + ' · +' + f.gain + ' punti', { size: 8, x: 10, color: '#5b6f96', bar: g.c });
+          if (f.value) text('Sulla pagina: ' + f.value, { size: 9, x: 10, color: '#5b6f96', bar: g.c });
+          text(f.detail, { size: 9.5, x: 10, bar: g.c });
+          f.els.forEach(function (e) {
+            text(e.desc, { size: 8.5, x: 20, bar: g.c, fill: '#f5f8fd' });
+            text(e.sel, { f: 3, size: 7.5, x: 20, color: '#5b6f96', bar: g.c, fill: '#f5f8fd' });
+            if (e.sug) text('-> ' + e.sug, { f: 3, size: 7.5, x: 20, color: '#1f6b45', bar: g.c, fill: '#f5f8fd' });
+          });
+          if (f.more) text('+ altri ' + f.more + ' elementi', { size: 8.5, x: 20, color: '#5b6f96', bar: g.c });
+          if (f.code) text(f.code, { f: 3, size: 7.5, x: 20, lead: 10, color: '#1f6b45', bar: g.c, fill: '#f2f6fc' });
+          if (f.where) text('Dove: ' + f.where, { size: 8.5, x: 10, color: '#6a4fb3', bar: g.c });
+        });
+      });
+      if (t.ok.length) {
+        y -= 8; need(30);
+        text(SEV.ok.h.toUpperCase() + ' (' + t.ok.length + ')', { f: 2, size: 9, color: SEV.ok.c, after: 2 });
+        t.ok.forEach(function (f) { text(f.title + ' — ' + f.detail, { size: 8.5, x: 10, color: '#5b6f96' }); });
+      }
+      if (!t.groups.length) text('Niente da sistemare in questa scheda.', { size: 9.5 });
+    });
+    y -= 14; text(REP_NOTE + ' Creato da Nimblu · dalpuntoweb.it/nimblu', { size: 8, color: '#5b6f96' });
+    // piè di pagina con il numero di pagina
+    pages.forEach(function (p, k) {
+      p.push('BT /F1 7.5 Tf ' + rgb('#5b6f96') + ' rg ' + M + ' 28 Td ' + pstr(winAnsi('Nimblu · ' + d.host + ' · ' + d.date)) + ' Tj ET');
+      var pn = winAnsi('Pagina ' + (k + 1) + ' di ' + pages.length);
+      p.push('BT /F1 7.5 Tf ' + rgb('#5b6f96') + ' rg ' + (PW - M - wid(pn, 1, 7.5)).toFixed(2) + ' 28 Td ' + pstr(pn) + ' Tj ET');
+    });
+    // il file: catalogo, albero delle pagine, tre caratteri standard, poi pagina + contenuto per ogni pagina
+    var objs = [], kids = [];
+    objs[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+    objs[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+    objs[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+    objs[5] = '<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>';
+    objs[6] = '<< /Title ' + pstr(winAnsi('Report Nimblu · ' + d.host)) + ' /Producer (Nimblu) >>';
+    pages.forEach(function (p, k) {
+      var po = 7 + k * 2, co = po + 1, s = p.join('\n');
+      kids.push(po + ' 0 R');
+      objs[po] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PW + ' ' + PH + '] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents ' + co + ' 0 R >>';
+      objs[co] = '<< /Length ' + s.length + ' >>\nstream\n' + s + '\nendstream';
+    });
+    objs[2] = '<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + pages.length + ' >>';
+    var out = '%PDF-1.4\n%âãÏÓ\n', xref = [];
+    for (var i = 1; i < objs.length; i++) { xref[i] = out.length; out += i + ' 0 obj\n' + objs[i] + '\nendobj\n'; }
+    var xo = out.length;
+    out += 'xref\n0 ' + objs.length + '\n0000000000 65535 f \n';
+    for (i = 1; i < objs.length; i++) out += ('000000000' + xref[i]).slice(-10) + ' 00000 n \n';
+    out += 'trailer\n<< /Size ' + objs.length + ' /Root 1 0 R /Info 6 0 R >>\nstartxref\n' + xo + '\n%%EOF\n';
+    var u8 = new Uint8Array(out.length);
+    for (i = 0; i < out.length; i++) u8[i] = out.charCodeAt(i) & 255;
+    return u8;
+  }
+
+  function downloadReport(fmt) {
+    fmt = REP_FMT[fmt] ? fmt : 'html';
+    var d = reportData(), now = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; }, blob;
+    if (fmt === 'pdf') blob = new Blob([repPdf(d)], { type: 'application/pdf' });
+    else if (fmt === 'docx') blob = repDocx(d);
+    else if (fmt === 'txt') blob = new Blob(['﻿' + repTxt(d)], { type: 'text/plain;charset=utf-8' });
+    else blob = new Blob([repHtml(d)], { type: 'text/html;charset=utf-8' });
+    var name = 'nimblu-report-' + d.host.replace(/[^a-z0-9.-]+/gi, '-') + '-' + now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + (d.mobile ? '-telefono' : '') + '.' + REP_FMT[fmt][2];
+    var url = URL.createObjectURL(blob), a = window.document.createElement('a');
+    a.href = url; a.download = name; a.setAttribute('data-mascot', '1'); a.style.display = 'none';
+    root.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+    say('Ecco il report ' + { html: 'come pagina web', pdf: 'in PDF', docx: 'in Word', txt: 'come testo' }[fmt] + ': ' + d.todo + (d.todo === 1 ? ' avviso o consiglio' : ' avvisi e consigli') + ' dalle cinque schede, nel file ' + name + ' 📄');
+  }
+  // la scelta del formato, sotto l'intestazione del pannello
+  function repFmtHtml() {
+    if (!ux.repOpen) return '';
+    return '<div class="repfmt"><span>Scarica il report con tutti gli avvisi e i consigli come</span>' + Object.keys(REP_FMT).map(function (k) {
+      return '<button type="button" data-rep="' + k + '">' + REP_FMT[k][0] + ' ' + REP_FMT[k][1] + '</button>';
+    }).join('') + '</div>';
   }
   // barre dei punteggi per categoria (cliccandone una si vedono solo i suoi controlli)
   function catsHtml(tab, L) {
@@ -6716,6 +7166,9 @@ window.__MASCOT_SRC = function (opts) {
     e.preventDefault(); e.stopPropagation();
     var a = b.getAttribute('data-ux');
     if (a === 'close') { closeUx(); return; }
+    if (a === 'report') { var st0 = uxPanel.scrollTop; ux.repOpen = !ux.repOpen; renderUx(); uxPanel.scrollTop = st0; return; }
+    var rf = b.getAttribute('data-rep');
+    if (rf) { downloadReport(rf); ux.repOpen = false; var st1 = uxPanel.scrollTop; renderUx(); uxPanel.scrollTop = st1; return; }
     if (a === 'again') { geoFetch(true); runAudits(); renderUx(); say('Ricontrollato!'); return; }
     var md = b.getAttribute('data-mode');
     if (md) { if ((md === 'mob') !== !!ux.mobile) setMobile(md === 'mob'); return; }

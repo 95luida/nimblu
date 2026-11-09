@@ -13,6 +13,7 @@
       var st = s.nimbluState && Date.now() - s.nimbluState.t < MAX_AGE ? s.nimbluState : null;
       window.__MASCOT_SRC({
         persistent: true,
+        version: chrome.runtime.getManifest().version,
         level: s.level,
         uxAuto: s.uxAuto !== false,
         talk: s.talk !== false,
@@ -66,7 +67,7 @@
   chrome.runtime.onMessage.addListener(function (m, sender, reply) {
     // controllo della pagina dall'icona: se Nimblu qui è nascosto o spento si apre solo il pannello, senza mascotte
     if (m && m.type === 'nimblu-check') {
-      if (!window.__mascot) window.__MASCOT_SRC({ persistent: true, panelOnly: true, talk: false, uxAuto: false, noEat: true, aiPage: false });
+      if (!window.__mascot) window.__MASCOT_SRC({ persistent: true, panelOnly: true, version: chrome.runtime.getManifest().version, talk: false, uxAuto: false, noEat: true, aiPage: false });
       if (window.__mascot && window.__mascot.check) window.__mascot.check(!!m.mobile);
       reply({ ok: !!window.__mascot });
       return;
